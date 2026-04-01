@@ -1,0 +1,129 @@
+{% extends 'base.html' %}
+{% block title %}Doctor Queue{% endblock %}
+{% block content %}
+<section class="panel">
+  <h2>Doctor Queue - Dr. {{ doctor.user.get_full_name|default:doctor.user.username }}</h2>
+  {% if last_completed_prescription %}
+  <div class="panel" style="margin-bottom:12px;">
+    <h4>Last Completed Prescription</h4>
+    <p class="muted">Use this for handover/printing.</p>
+    <div class="action-row">
+      <a class="btn btn-outline" href="/prescription/{{ last_completed_prescription.id }}/pdf/" target="_blank">Open PDF</a>
+      <a class="btn btn-primary" href="/prescription/{{ last_completed_prescription.id }}/print/" target="_blank">Print & Handover</a>
+    </div>
+  </div>
+  {% endif %}
+  {% if current %}
+    <p class="lead">Current: <strong>{{ current.token_display }}</strong> ({{ current.get_status_display }})</p>
+    <div class="action-row">
+      {% if current.status == 'called' %}
+      <form method="post" action="/doctor/token/{{ current.id }}/start/">{% csrf_token %}<button class="btn btn-outline">Continue Consult</button></form>
+      <a class="btn btn-outline" href="/doctor/token/{{ current.id }}/prescription/">
+        {% if current_has_prescription %}Update Prescription{% else %}Add Prescription{% endif %}
+      </a>
+      <form method="post" action="/doctor/token/{{ current.id }}/complete/">{% csrf_token %}<button class="btn btn-primary">End Consultation</button></form>
+      {% endif %}
+      {% if current.status == 'in_consultation' %}
+      <a class="btn btn-outline" href="/doctor/token/{{ current.id }}/prescription/">
+        {% if current_has_prescription %}Update Prescription{% else %}Add Prescription{% endif %}
+      </a>
+      {% if current_prescription %}
+      <a class="btn btn-outline" href="/prescription/{{ current_prescription.id }}/pdf/" target="_blank">PDF</a>
+      <a class="btn btn-outline" href="/prescription/{{ current_prescription.id }}/print/" target="_blank">Print</a>
+      {% endif %}
+      <form method="post" action="/doctor/token/{{ current.id }}/complete/">{% csrf_token %}<button class="btn btn-primary">End Consultation</button></form>
+      {% endif %}
+    </div>
+  {% else %}
+    <p class="lead">No current patient.</p>
+  {% endif %}
+  <p class="muted">Call Next -> Continue Consult -> Add Prescription -> End Consultation -> Call Next.</p>
+  <form method="post" action="/doctor/call-next/">
+    {% csrf_token %}
+    <button class="btn btn-primary">Call Next Patient</button>
+  </form>
+</section>
+
+{% if current %}
+<section class="grid-2">
+  <article class="panel">
+    <h3>Current Patient Details</h3>
+    <p><strong>Name:</strong> {{ current.patient.get_full_name|default:current.patient.username }}</p>
+    <p><strong>Phone:</strong> {{ current.patient.phone|default:'-' }}</p>
+    <p><strong>Email:</strong> {{ current.patient.email|default:'-' }}</p>
+    <p><strong>Token:</strong> {{ current.token_display }}</p>
+    <p><strong>Notes:</strong> {{ current.notes|default:'-' }}</p>
+    {% if current_patient_profile %}
+      <p><strong>Blood Group:</strong> {{ current_patient_profile.blood_group|default:'-' }}</p>
+      <p><strong>Allergies:</strong> {{ current_patient_profile.allergies|default:'-' }}</p>
+      <p><strong>Medical History:</strong> {{ current_patient_profile.medical_history|default:'-' }}</p>
+    {% endif %}
+  </article>
+  <article class="panel">
+    <h3>Patient History (This Doctor)</h3>
+    <p class="muted">Recent visits and prescriptions.</p>
+    <table class="table">
+      <thead><tr><th>Visit Date</th><th>Check-ins</th></tr></thead>
+      <tbody>
+        {% for visit in current_patient_history.visits %}
+        <tr>
+          <td>{{ visit.visit_date }}</td>
+          <td>{{ visit.check_in_count }}</td>
+        </tr>
+        {% empty %}
+        <tr><td colspan="2">No visit history.</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </article>
+</section>
+
+<section class="panel">
+  <h3>Previous Prescriptions</h3>
+  <table class="table">
+    <thead><tr><th>ID</th><th>Date</th><th>Diagnosis</th><th>Email</th><th>PDF</th></tr></thead>
+    <tbody>
+      {% for p in current_patient_history.prescriptions %}
+      <tr>
+        <td>#{{ p.id }}</td>
+        <td>{{ p.created_at|date:"M d, Y H:i" }}</td>
+        <td>{{ p.diagnosis|default:'-' }}</td>
+        <td>
+          {% if p.email_sent %}
+            <span class="badge text-bg-success">Sent</span>
+          {% else %}
+            <span class="badge text-bg-secondary">Pending Email</span>
+          {% endif %}
+        </td>
+        <td><a class="btn btn-outline" href="/prescription/{{ p.id }}/pdf/" target="_blank">Open</a></td>
+      </tr>
+      {% empty %}
+      <tr><td colspan="5">No previous prescriptions.</td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</section>
+{% endif %}
+
+<section class="panel">
+  <h3>Waiting Queue</h3>
+  <table class="table">
+    <thead><tr><th>Token</th><th>Patient</th><th>Status</th><th>Actions</th></tr></thead>
+    <tbody>
+      {% for token in waiting %}
+      <tr>
+        <td>{{ token.token_display }}</td>
+        <td>{{ token.patient.get_full_name|default:token.patient.username }}</td>
+        <td>{{ token.get_status_display }}</td>
+        <td class="action-row">
+          <form method="post" action="/doctor/token/{{ token.id }}/call/">{% csrf_token %}<button class="btn btn-outline">Call</button></form>
+          <form method="post" action="/doctor/token/{{ token.id }}/start/">{% csrf_token %}<button class="btn btn-outline">Continue Consult</button></form>
+        </td>
+      </tr>
+      {% empty %}
+      <tr><td colspan="4">No waiting patients.</td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</section>
+{% endblock %}

@@ -1,0 +1,24 @@
+{% extends 'base.html' %}
+{% block title %}Patient Signup{% endblock %}
+{% block content %}
+<section class="auth-wrap mobile-auth-shell">
+  <div class="panel wide mobile-auth-card">
+    <h2 style="text-align:center;">Patient Signup</h2>
+    <p class="muted">Only patients can self-register here.</p>
+    <form method="post" class="form-grid">
+      {% csrf_token %}
+      {{ form.non_field_errors }}
+
+      {% for field in form %}
+        <div>
+          <label>{{ field.label }}</label>
+          {{ field }}
+          {% if field.errors %}<small class="error">{{ field.errors|striptags }}</small>{% endif %}
+        </div>
+      {% endfor %}
+
+      <button class="btn btn-primary" type="submit">Create Patient Account</button>
+    </form>
+  </div>
+</section>
+{% endblock %}

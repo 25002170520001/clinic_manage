@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Queue Display</title>
+  <link rel="stylesheet" href="/static/css/site.css" />
+</head>
+<body>
+  <main class="container">
+    <section class="panel">
+      <h1>Live Queue Display</h1>
+      <p class="lead" id="doctor-name">Dr. {{ doctor.user.get_full_name|default:doctor.user.username }}</p>
+      <div class="grid-2">
+        <article class="panel">
+          <h3>Now Calling</h3>
+          <p id="current-token" style="font-size:2rem; margin:0;">--</p>
+        </article>
+        <article class="panel">
+          <h3>Waiting Tokens</h3>
+          <ul id="waiting-list" class="plain-list"></ul>
+        </article>
+      </div>
+      <p class="muted" id="updated-at"></p>
+    </section>
+  </main>
+
+  <script>
+    async function refreshQueue() {
+      const response = await fetch('/display/{{ doctor.id }}/data/');
+      const data = await response.json();
+      document.getElementById('doctor-name').innerText = data.doctor;
+      document.getElementById('current-token').innerText = data.current ? data.current.token + ' (' + data.current.status + ')' : 'Waiting...';
+      const waitingEl = document.getElementById('waiting-list');
+      waitingEl.innerHTML = '';
+      data.waiting.forEach((row) => {
+        const li = document.createElement('li');
+        li.textContent = row.token + ' - ' + row.status;
+        waitingEl.appendChild(li);
+      });
+      document.getElementById('updated-at').innerText = 'Updated: ' + new Date(data.updated_at).toLocaleTimeString();
+    }
+    refreshQueue();
+    setInterval(refreshQueue, 8000);
+  </script>
+</body>
+</html>

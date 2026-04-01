@@ -1,0 +1,159 @@
+{% extends 'base.html' %}
+{% block title %}Doctor Dashboard{% endblock %}
+{% block page_heading %}Doctor Console{% endblock %}
+{% block content %}
+<section class="hero hero-small">
+  <div>
+    <p class="eyebrow">Doctor Dashboard</p>
+    <h1>{{ doctor.get_full_name }}</h1>
+    <p class="lead">Manage consultation flow and keep your queue moving.</p>
+  </div>
+</section>
+
+<section class="panel">
+  <h3>My Availability</h3>
+  <p class="lead">
+    Current status:
+    {% if doctor_is_available %}
+      <span class="badge text-bg-success">Available</span>
+    {% else %}
+      <span class="badge text-bg-secondary">Unavailable</span>
+    {% endif %}
+  </p>
+  <p class="muted">This controls whether patients can book you online and whether reception can assign new walk-ins to you.</p>
+  <form method="post" action="/dashboard/doctor/availability/toggle/" class="inline-form">
+    {% csrf_token %}
+    <input type="hidden" name="next" value="/dashboard/doctor/" />
+    <button class="btn btn-outline" type="submit">
+      {% if doctor_is_available %}Set Unavailable{% else %}Set Available{% endif %}
+    </button>
+  </form>
+</section>
+
+<section class="stats">
+  <article><h3>{{ today_appointments }}</h3><p>Today Appointments</p></article>
+  <article><h3>{{ queue_waiting }}</h3><p>Waiting Patients</p></article>
+  <article><h3>{{ in_consultation }}</h3><p>In Consultation</p></article>
+</section>
+
+<section class="stats">
+  <article><h3>{{ today_doctor_patients }}</h3><p>Patients Came Today</p></article>
+  <article><h3>{{ total_doctor_patient_visits }}</h3><p>Total Visits (Since Start)</p></article>
+  <article><h3>{{ total_doctor_unique_patients }}</h3><p>Total Unique Patients</p></article>
+</section>
+
+<section class="panel">
+  <h3>Today Token Progress (My Queue)</h3>
+  <p class="lead">Tokens issued today: <strong>{{ tokens_issued_today_doctor }}</strong></p>
+  <p class="muted">Latest token: <strong>{% if latest_token_today_doctor %}{{ latest_token_today_doctor.token_display }}{% else %}-{% endif %}</strong></p>
+  <p class="muted">Current active token: <strong>{% if current_active_token %}{{ current_active_token.token_display }}{% else %}-{% endif %}</strong></p>
+</section>
+
+{% if current_active_token %}
+<section class="grid-2">
+  <article class="panel">
+    <h3>Current Patient (Live)</h3>
+    <p><strong>Token:</strong> {{ current_active_token.token_display }}</p>
+    <p><strong>Name:</strong> {{ current_active_token.patient.get_full_name|default:current_active_token.patient.username }}</p>
+    <p><strong>Phone:</strong> {{ current_active_token.patient.phone|default:'-' }}</p>
+    <p><strong>Email:</strong> {{ current_active_token.patient.email|default:'-' }}</p>
+    {% if current_patient_profile %}
+      <p><strong>Blood Group:</strong> {{ current_patient_profile.blood_group|default:'-' }}</p>
+      <p><strong>Allergies:</strong> {{ current_patient_profile.allergies|default:'-' }}</p>
+      <p><strong>Emergency Contact:</strong> {{ current_patient_profile.emergency_contact|default:'-' }}</p>
+      <p><strong>Medical History:</strong> {{ current_patient_profile.medical_history|default:'-' }}</p>
+    {% endif %}
+    <div class="cta-row">
+      <a class="btn btn-primary" href="/doctor/">Open Doctor Queue</a>
+    </div>
+  </article>
+  <article class="panel">
+    <h3>Today's Details</h3>
+    <p><strong>Today's Visit:</strong> {% if current_patient_today_visit %}Yes{% else %}No{% endif %}</p>
+    <p><strong>Today's Tokens:</strong> {{ current_patient_today_tokens|length }}</p>
+    <p><strong>Total Appointments:</strong> {{ current_patient_total_appointments }}</p>
+    <p><strong>Completed:</strong> {{ current_patient_completed_appointments }} | <strong>Cancelled:</strong> {{ current_patient_cancelled_appointments }}</p>
+    {% if current_patient_last_prescription %}
+      <p><strong>Last Prescription:</strong> #{{ current_patient_last_prescription.id }} by Dr. {{ current_patient_last_prescription.doctor.user.get_full_name|default:current_patient_last_prescription.doctor.user.username }}</p>
+      <div class="cta-row">
+        <a class="btn btn-outline" href="/prescription/{{ current_patient_last_prescription.id }}/pdf/" target="_blank">Open Last Rx</a>
+      </div>
+    {% else %}
+      <p><strong>Last Prescription:</strong> -</p>
+    {% endif %}
+  </article>
+</section>
+
+<section class="grid-2">
+  <article class="panel">
+    <h3>Recent Visits (This Doctor)</h3>
+    <table class="table">
+      <thead><tr><th>Visit Date</th><th>Check-ins</th></tr></thead>
+      <tbody>
+      {% for v in current_patient_recent_visits %}
+        <tr><td>{{ v.visit_date }}</td><td>{{ v.check_in_count }}</td></tr>
+      {% empty %}
+        <tr><td colspan="2">No recent visits.</td></tr>
+      {% endfor %}
+      </tbody>
+    </table>
+  </article>
+  <article class="panel">
+    <h3>Recent Prescriptions (This Doctor)</h3>
+    <table class="table">
+      <thead><tr><th>ID</th><th>Date</th><th>Email</th></tr></thead>
+      <tbody>
+      {% for p in current_patient_recent_prescriptions %}
+        <tr>
+          <td>#{{ p.id }}</td>
+          <td>{{ p.created_at|date:"M d, H:i" }}</td>
+          <td>{% if p.email_sent %}Sent{% else %}Pending{% endif %}</td>
+        </tr>
+      {% empty %}
+        <tr><td colspan="3">No prescriptions yet.</td></tr>
+      {% endfor %}
+      </tbody>
+    </table>
+  </article>
+</section>
+{% endif %}
+
+<section class="grid-2">
+  <article class="panel">
+    <h3>Next Patient</h3>
+    {% if next_token %}
+      <p class="lead"><strong>{{ next_token.token_display }}</strong> - {{ next_token.patient.get_full_name|default:next_token.patient.username }}</p>
+      <p class="muted">Priority: {{ next_token.priority }} | Est wait: {{ next_token.get_estimated_wait_time }} mins</p>
+    {% else %}
+      <p class="lead">No patients waiting.</p>
+    {% endif %}
+    <div class="cta-row">
+      <a class="btn btn-primary" href="/doctor/">Open Live Queue</a>
+    </div>
+  </article>
+
+  <article class="panel">
+    <h3>Completion Summary</h3>
+    <p class="lead">Completed today: <strong>{{ completed_today }}</strong></p>
+    <p class="muted">Keep average consultation time consistent for better queue accuracy.</p>
+  </article>
+</section>
+
+<section class="panel">
+  <h3>Recently Completed Tokens</h3>
+  <table class="table">
+    <thead><tr><th>Token</th><th>Patient</th><th>Completed At</th></tr></thead>
+    <tbody>
+      {% for token in recent_completed_tokens %}
+        <tr>
+          <td>{{ token.token_display }}</td>
+          <td>{{ token.patient.get_full_name|default:token.patient.username }}</td>
+          <td>{{ token.consultation_end_time|date:"H:i" }}</td>
+        </tr>
+      {% empty %}
+        <tr><td colspan="3">No completed consultations yet.</td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</section>
+{% endblock %}

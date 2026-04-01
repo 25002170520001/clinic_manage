@@ -1,0 +1,43 @@
+{% extends "base.html" %}
+{% block title %}My Profile{% endblock %}
+{% block page_heading %}My Profile{% endblock %}
+{% block content %}
+<section class="panel">
+  <div class="profile-head">
+    <div class="profile-avatar">{{ avatar_initial }}</div>
+    <div>
+      <h2 style="margin:0;">{{ display_name }}</h2>
+      <p class="muted" style="margin:4px 0 0;">{{ user.role|title }} account</p>
+    </div>
+  </div>
+</section>
+
+<section class="panel">
+  <h3>Basic Details</h3>
+  <form method="post" class="form-grid">
+    {% csrf_token %}
+    {% for field in user_form %}
+      <div>
+        <label>{{ field.label }}</label>
+        {{ field }}
+        {% if field.errors %}<small class="error">{{ field.errors|striptags }}</small>{% endif %}
+      </div>
+    {% endfor %}
+
+    {% if patient_form %}
+      <div style="grid-column: 1 / -1;">
+        <h3 style="margin:6px 0;">Patient Medical Details</h3>
+      </div>
+      {% for field in patient_form %}
+        <div>
+          <label>{{ field.label }}</label>
+          {{ field }}
+          {% if field.errors %}<small class="error">{{ field.errors|striptags }}</small>{% endif %}
+        </div>
+      {% endfor %}
+    {% endif %}
+
+    <button type="submit" class="btn btn-primary">Save Profile</button>
+  </form>
+</section>
+{% endblock %}

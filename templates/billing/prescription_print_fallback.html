@@ -1,0 +1,67 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Prescription {{ prescription.id }}</title>
+  <style>
+    body{font-family:Arial,sans-serif;color:#111;max-width:900px;margin:20px auto;padding:0 16px}
+    h1{margin-bottom:4px} .muted{color:#666} table{width:100%;border-collapse:collapse;margin-top:12px}
+    th,td{border:1px solid #ddd;padding:8px;text-align:left} .top{display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap}
+    @media print {.no-print{display:none} body{margin:0;max-width:none}}
+  </style>
+</head>
+<body>
+  {% if pdf_unavailable %}
+  <div class="no-print" style="background:#fff3cd;border:1px solid #ffe69c;padding:10px;border-radius:8px;margin-bottom:12px;">
+    PDF generation library is unavailable. Showing print-ready prescription page instead.
+  </div>
+  {% endif %}
+  <div class="top">
+    <div>
+      <h1>Family Health Care Prescription</h1>
+      <div class="muted">Prescription #{{ prescription.id }}</div>
+    </div>
+    <button class="no-print" onclick="window.print()">Print</button>
+  </div>
+
+  <p><strong>Doctor:</strong> Dr. {{ prescription.doctor.user.get_full_name|default:prescription.doctor.user.username }}</p>
+  <p><strong>Patient:</strong> {{ prescription.patient.get_full_name|default:prescription.patient.username }}</p>
+  <p><strong>Date:</strong> {{ prescription.created_at|date:"M d, Y H:i" }}</p>
+  <p><strong>Symptoms:</strong> {{ prescription.symptoms|default:"-" }}</p>
+  <p><strong>Diagnosis:</strong> {{ prescription.diagnosis|default:"-" }}</p>
+  <p><strong>Notes:</strong> {{ prescription.notes|default:"-" }}</p>
+  <p><strong>Follow-up:</strong> {{ prescription.follow_up_date|default:"-" }}</p>
+
+  <h3>Medicines</h3>
+  <table>
+    <thead>
+      <tr>
+        <th>Name</th><th>Dose</th><th>Times/Day</th><th>Days</th><th>Qty</th><th>Timing</th><th>Instruction</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for m in prescription.medicine_items.all %}
+      <tr>
+        <td>{{ m.medicine_name }}</td>
+        <td>{{ m.dose|default:"-" }}</td>
+        <td>{{ m.times_per_day }}</td>
+        <td>{{ m.duration_days }}</td>
+        <td>{{ m.quantity_tablets }}</td>
+        <td>{{ m.get_timing_display }}</td>
+        <td>{{ m.instruction|default:"-" }}</td>
+      </tr>
+      {% empty %}
+      <tr><td colspan="7">{{ prescription.medicines|default:"-" }}</td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  {% if auto_print %}
+  <script>
+    window.addEventListener("load", function () {
+      window.print();
+    });
+  </script>
+  {% endif %}
+</body>
+</html>

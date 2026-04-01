@@ -1,0 +1,28 @@
+{% extends 'base.html' %}
+{% block title %}Queue TV Launcher{% endblock %}
+{% block page_heading %}TV Queue Screen Launcher{% endblock %}
+{% block content %}
+<section class="panel">
+  <h2>Queue Display Links</h2>
+  <p class="muted">Open these links on the clinic TV laptop/browser. Each doctor has a live queue page.</p>
+</section>
+
+<section class="panel">
+  <table class="table">
+    <thead><tr><th>Doctor</th><th>TV URL</th><th>Action</th></tr></thead>
+    <tbody>
+      {% for row in doctor_links %}
+      <tr>
+        <td>Dr. {{ row.doctor.user.get_full_name|default:row.doctor.user.username }}</td>
+        <td><code>{{ row.display_url }}</code></td>
+        <td>
+          <a class="btn btn-primary" href="{{ row.display_url }}" target="_blank" rel="noopener">Open TV</a>
+        </td>
+      </tr>
+      {% empty %}
+      <tr><td colspan="3">No doctors found.</td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</section>
+{% endblock %}

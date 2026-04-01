@@ -1,0 +1,55 @@
+{% extends 'base.html' %}
+{% block title %}Theme Settings{% endblock %}
+{% block page_heading %}Theme Settings{% endblock %}
+{% block content %}
+<section class="panel wide">
+  <h2>Appearance Theme</h2>
+  <p class="muted">Choose website theme. This preference is saved permanently in your browser.</p>
+
+  <div class="theme-options">
+    <button type="button" class="btn btn-outline theme-btn" data-theme-option="light">
+      <i class="bi bi-sun"></i> Light
+    </button>
+    <button type="button" class="btn btn-outline theme-btn" data-theme-option="dark">
+      <i class="bi bi-moon-stars"></i> Dark
+    </button>
+    <button type="button" class="btn btn-outline theme-btn" data-theme-option="system">
+      <i class="bi bi-laptop"></i> System
+    </button>
+  </div>
+  <p class="muted" id="theme-current-label"></p>
+</section>
+
+<script>
+  (function () {
+    const options = ["light", "dark", "system"];
+    const currentLabel = document.getElementById("theme-current-label");
+
+    function updateUI() {
+      const pref = localStorage.getItem("fhc_theme") || "system";
+      options.forEach((opt) => {
+        const btn = document.querySelector(`[data-theme-option="${opt}"]`);
+        if (!btn) return;
+        if (opt === pref) {
+          btn.classList.remove("btn-outline");
+          btn.classList.add("btn-primary");
+        } else {
+          btn.classList.add("btn-outline");
+          btn.classList.remove("btn-primary");
+        }
+      });
+      currentLabel.textContent = `Current theme preference: ${pref}`;
+    }
+
+    document.querySelectorAll(".theme-btn").forEach((btn) => {
+      btn.addEventListener("click", function () {
+        const pref = this.getAttribute("data-theme-option");
+        if (window.setThemePreference) window.setThemePreference(pref);
+        updateUI();
+      });
+    });
+
+    updateUI();
+  })();
+</script>
+{% endblock %}

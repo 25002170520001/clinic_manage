@@ -1,0 +1,99 @@
+{% extends 'base.html' %}
+{% block title %}Reception Queue{% endblock %}
+{% block content %}
+<section class="grid-2">
+  <article class="panel">
+    <h3>Create Walk-in Token (Single Form)</h3>
+    <p class="muted">Use existing patient OR fill new patient fields. New patient default password: <strong>Patient@123</strong></p>
+    {% if available_doctor_count == 0 %}
+      <p class="error">No doctor is currently available. Ask admin/doctor to set availability first.</p>
+    {% endif %}
+    <form method="post" class="form-grid">
+      {% csrf_token %}
+      {% for field in form %}
+        <div>
+          <label>{{ field.label }}</label>
+          {{ field }}
+          {% if field.help_text %}<small class="muted">{{ field.help_text }}</small>{% endif %}
+          {% if field.errors %}<small class="error">{{ field.errors|striptags }}</small>{% endif %}
+        </div>
+      {% endfor %}
+      <button type="submit" class="btn btn-primary">Create Walk-in</button>
+    </form>
+  </article>
+
+  <article class="panel">
+    <h3>Reception Action Guide</h3>
+    <ul class="plain-list">
+      <li><strong>Reception does</strong>: create walk-in token and monitor queue board.</li>
+      <li><strong>Doctor does</strong>: Call, Continue Consult, Add Prescription, End.</li>
+      <li>Queue updates automatically every 10 seconds.</li>
+    </ul>
+  </article>
+</section>
+
+<section class="grid-2">
+  <article class="panel">
+    <h3>Filter Queue by Doctor</h3>
+    <form method="get" class="form-stack">
+      <label>Doctor</label>
+      <select name="doctor" class="form-input">
+        <option value="">All doctors</option>
+        {% for doc in doctors %}
+          <option value="{{ doc.id }}" {% if selected_doctor and selected_doctor.id == doc.id %}selected{% endif %}>Dr. {{ doc.user.get_full_name|default:doc.user.username }}</option>
+        {% endfor %}
+      </select>
+      <button class="btn btn-outline" type="submit">Load Queue</button>
+    </form>
+    {% if selected_doctor %}
+      <a class="btn btn-primary" href="/display/{{ selected_doctor.id }}/" style="margin-top:10px;">Open TV Queue Screen</a>
+    {% endif %}
+    <a class="btn btn-outline" href="/reception/tv/" style="margin-top:10px;">TV Launcher (All Doctors)</a>
+  </article>
+</section>
+
+<section class="panel">
+  <h3>Queue{% if selected_doctor %} - Dr. {{ selected_doctor.user.get_full_name|default:selected_doctor.user.username }}{% else %} - All Doctors{% endif %}</h3>
+  <table class="table">
+    <thead><tr><th>Token</th><th>Doctor</th><th>Patient</th><th>Priority</th><th>Status</th></tr></thead>
+    <tbody>
+      {% for token in tokens %}
+      <tr>
+        <td>{{ token.token_display }}</td>
+        <td>Dr. {{ token.doctor.user.get_full_name|default:token.doctor.user.username }}</td>
+        <td>{{ token.patient.get_full_name|default:token.patient.username }}</td>
+        <td>{{ token.priority }}</td>
+        <td>{{ token.get_status_display }}</td>
+      </tr>
+      {% empty %}
+      <tr><td colspan="5">No queue entries.</td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</section>
+<script>
+  let lastInputAt = 0;
+
+  function markEditing() {
+    lastInputAt = Date.now();
+  }
+
+  document.querySelectorAll("form input, form select, form textarea").forEach((el) => {
+    el.addEventListener("focus", markEditing);
+    el.addEventListener("input", markEditing);
+    el.addEventListener("change", markEditing);
+  });
+
+  setInterval(() => {
+    const active = document.activeElement;
+    const activeInForm = active && ["INPUT", "SELECT", "TEXTAREA"].includes(active.tagName);
+    const recentlyTyped = Date.now() - lastInputAt < 15000;
+
+    // Do not refresh while user is filling the form.
+    if (activeInForm || recentlyTyped) return;
+
+    const url = new URL(window.location.href);
+    window.location.href = url.pathname + url.search;
+  }, 10000);
+</script>
+{% endblock %}

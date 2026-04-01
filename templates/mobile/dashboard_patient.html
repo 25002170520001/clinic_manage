@@ -1,0 +1,63 @@
+{% extends 'base.html' %}
+{% block title %}Patient Dashboard{% endblock %}
+{% block content %}
+<section class="panel mobile-hero-app">
+  <p class="eyebrow" style="background:rgba(255,255,255,.2);color:#fff;">Patient Dashboard</p>
+  <h1 style="margin:8px 0 6px;">Hello, {{ user.get_full_name|default:user.username }}</h1>
+  <p style="margin:0;">Your appointment journey, token status, and queue progress.</p>
+</section>
+
+<section class="mobile-mini-grid">
+  <article class="mobile-mini-card">
+    <h3 style="margin:0;">{{ my_total_appointments }}</h3>
+    <p class="muted" style="margin:4px 0 0;">Total Appointments</p>
+  </article>
+  <article class="mobile-mini-card">
+    <h3 style="margin:0;">{{ my_today_appointments }}</h3>
+    <p class="muted" style="margin:4px 0 0;">Today</p>
+  </article>
+  <article class="mobile-mini-card">
+    <h3 style="margin:0;">{{ my_upcoming }}</h3>
+    <p class="muted" style="margin:4px 0 0;">Upcoming</p>
+  </article>
+  <article class="mobile-mini-card">
+    <h3 style="margin:0;">{{ profile_completion_percent }}%</h3>
+    <p class="muted" style="margin:4px 0 0;">Profile Complete</p>
+  </article>
+</section>
+
+<section class="panel">
+  <h3 style="margin-top:0;">Current Token</h3>
+  {% if active_token %}
+    <p class="lead" style="margin:0 0 6px;">Token <strong>{{ active_token.token_display }}</strong> - {{ active_token.get_status_display }}</p>
+    <p class="muted" style="margin:0;">Ahead: {{ active_token.get_patients_ahead }} | Wait: {{ active_token.get_estimated_wait_time }} mins</p>
+  {% else %}
+    <p class="lead" style="margin:0;">No active token right now.</p>
+  {% endif %}
+  <div class="cta-row cta-row-stack">
+    <a class="btn btn-primary" href="/patient/appointments/book/">Book Appointment</a>
+    <a class="btn btn-outline" href="/patient/appointments/my/">My Appointments</a>
+    <a class="btn btn-outline" href="/patient/prescriptions/">My Prescriptions</a>
+    <a class="btn btn-outline" href="/profile/">Edit Profile</a>
+  </div>
+</section>
+
+<section class="panel">
+  <h3 style="margin-top:0;">Recent Appointments</h3>
+  <table class="table">
+    <thead><tr><th>#</th><th>Doctor</th><th>Status</th><th>Booked</th></tr></thead>
+    <tbody>
+      {% for appointment in recent_appointments %}
+        <tr>
+          <td>{{ appointment.id }}</td>
+          <td>Dr. {{ appointment.doctor.user.get_full_name|default:appointment.doctor.user.username }}</td>
+          <td>{{ appointment.get_status_display }}</td>
+          <td>{{ appointment.created_at|date:"M d, H:i" }}</td>
+        </tr>
+      {% empty %}
+        <tr><td colspan="4">No appointments yet.</td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</section>
+{% endblock %}

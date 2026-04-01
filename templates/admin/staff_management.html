@@ -1,0 +1,239 @@
+{% extends 'base.html' %}
+{% block title %}Staff Management{% endblock %}
+{% block content %}
+<section class="hero hero-small">
+  <div>
+    <p class="eyebrow">Admin Only</p>
+    <h1>Manage Doctors, Receptionists, and Patients</h1>
+  </div>
+</section>
+
+<section class="panel">
+  <ul class="nav nav-pills mb-3" id="admin-staff-tabs" role="tablist">
+    <li class="nav-item" role="presentation">
+      <button class="nav-link active" id="tab-create" data-bs-toggle="pill" data-bs-target="#pane-create" type="button">Create Accounts</button>
+    </li>
+    <li class="nav-item" role="presentation">
+      <button class="nav-link" id="tab-manage" data-bs-toggle="pill" data-bs-target="#pane-manage" type="button">Manage Accounts</button>
+    </li>
+    <li class="nav-item" role="presentation">
+      <button class="nav-link" id="tab-availability" data-bs-toggle="pill" data-bs-target="#pane-availability" type="button">Doctor Availability</button>
+    </li>
+  </ul>
+
+  <div class="tab-content">
+    <div class="tab-pane fade show active" id="pane-create" role="tabpanel">
+      <section class="grid-2">
+        <article class="panel">
+          <h3>Create Receptionist</h3>
+          <form method="post" class="form-grid">
+            {% csrf_token %}
+            <input type="hidden" name="form_type" value="receptionist" />
+            {% for field in receptionist_form %}
+              <div>
+                <label>{{ field.label }}</label>
+                {{ field }}
+                {% if field.errors %}<small class="error">{{ field.errors|striptags }}</small>{% endif %}
+              </div>
+            {% endfor %}
+            <button type="submit" class="btn btn-primary">Create Receptionist</button>
+          </form>
+        </article>
+
+        <article class="panel">
+          <h3>Create Doctor</h3>
+          <form method="post" class="form-grid">
+            {% csrf_token %}
+            <input type="hidden" name="form_type" value="doctor" />
+            {% for field in doctor_form %}
+              <div>
+                <label>{{ field.label }}</label>
+                {{ field }}
+                {% if field.errors %}<small class="error">{{ field.errors|striptags }}</small>{% endif %}
+              </div>
+            {% endfor %}
+            <button type="submit" class="btn btn-primary">Create Doctor</button>
+          </form>
+        </article>
+      </section>
+
+      <section class="panel">
+        <h3>Create Patient (By Admin)</h3>
+        <form method="post" class="form-grid">
+          {% csrf_token %}
+          <input type="hidden" name="form_type" value="patient" />
+          {% for field in patient_form %}
+            <div>
+              <label>{{ field.label }}</label>
+              {{ field }}
+              {% if field.errors %}<small class="error">{{ field.errors|striptags }}</small>{% endif %}
+            </div>
+          {% endfor %}
+          <button type="submit" class="btn btn-primary">Create Patient</button>
+        </form>
+      </section>
+    </div>
+
+    <div class="tab-pane fade" id="pane-manage" role="tabpanel">
+      <section class="panel">
+        <h3>Search & Filter</h3>
+        <form method="get" class="form-grid">
+          <div>
+            <label>Search</label>
+            <input class="form-input" type="text" name="q" value="{{ query }}" placeholder="Username, name, email, phone, specialization" />
+          </div>
+          <div>
+            <label>Role</label>
+            <select class="form-input" name="role">
+              <option value="all" {% if role_filter == 'all' %}selected{% endif %}>All</option>
+              <option value="doctor" {% if role_filter == 'doctor' %}selected{% endif %}>Doctor</option>
+              <option value="receptionist" {% if role_filter == 'receptionist' %}selected{% endif %}>Receptionist</option>
+              <option value="patient" {% if role_filter == 'patient' %}selected{% endif %}>Patient</option>
+            </select>
+          </div>
+          <div>
+            <label>Status</label>
+            <select class="form-input" name="active">
+              <option value="all" {% if active_filter == 'all' %}selected{% endif %}>All</option>
+              <option value="active" {% if active_filter == 'active' %}selected{% endif %}>Active</option>
+              <option value="inactive" {% if active_filter == 'inactive' %}selected{% endif %}>Inactive</option>
+            </select>
+          </div>
+          <div class="action-row">
+            <button type="submit" class="btn btn-primary">Apply Filter</button>
+            <a href="/admin/staff/" class="btn btn-outline">Reset</a>
+          </div>
+        </form>
+        <div class="cta-row">
+          <a class="btn btn-outline" href="/admin/staff/export/doctor/?q={{ query }}&active={{ active_filter }}">Export Doctors CSV</a>
+          <a class="btn btn-outline" href="/admin/staff/export/receptionist/?q={{ query }}&active={{ active_filter }}">Export Receptionists CSV</a>
+          <a class="btn btn-outline" href="/admin/staff/export/patient/?q={{ query }}&active={{ active_filter }}">Export Patients CSV</a>
+        </div>
+      </section>
+
+      {% if show_receptionists %}
+      <section class="panel">
+        <h3>Receptionists</h3>
+        <table class="table">
+          <thead><tr><th>Username</th><th>Name</th><th>Email</th><th>Actions</th></tr></thead>
+          <tbody>
+          {% for user in receptionists %}
+            <tr>
+              <td>{{ user.username }}</td>
+              <td>{{ user.get_full_name|default:'-' }}</td>
+              <td>{{ user.email|default:'-' }}</td>
+              <td class="action-row">
+                <a class="btn btn-outline" href="/admin/staff/user/{{ user.id }}/edit/">Edit</a>
+                <form method="post" action="/admin/staff/user/{{ user.id }}/delete/" onsubmit="return confirm('Delete receptionist {{ user.username }}?');">
+                  {% csrf_token %}
+                  <button class="btn btn-primary" type="submit">Delete</button>
+                </form>
+              </td>
+            </tr>
+          {% empty %}
+            <tr><td colspan="4">No receptionists yet.</td></tr>
+          {% endfor %}
+          </tbody>
+        </table>
+      </section>
+      {% endif %}
+
+      {% if show_doctors %}
+      <section class="panel">
+        <h3>Doctors</h3>
+        <table class="table">
+          <thead><tr><th>Username</th><th>Name</th><th>Specialization</th><th>Status</th><th>Actions</th></tr></thead>
+          <tbody>
+          {% for doctor in doctors %}
+            <tr>
+              <td>{{ doctor.user.username }}</td>
+              <td>{{ doctor.user.get_full_name|default:'-' }}</td>
+              <td>{{ doctor.specialization }}</td>
+              <td>
+                {% if doctor.is_available %}
+                  <span class="badge text-bg-success">Available</span>
+                {% else %}
+                  <span class="badge text-bg-secondary">Unavailable</span>
+                {% endif %}
+              </td>
+              <td class="action-row">
+                <a class="btn btn-outline" href="/admin/staff/doctor/{{ doctor.id }}/edit/">Edit</a>
+                <form method="post" action="/admin/staff/doctor/{{ doctor.id }}/delete/" onsubmit="return confirm('Delete doctor {{ doctor.user.username }}?');">
+                  {% csrf_token %}
+                  <button class="btn btn-primary" type="submit">Delete</button>
+                </form>
+              </td>
+            </tr>
+          {% empty %}
+            <tr><td colspan="5">No doctors yet.</td></tr>
+          {% endfor %}
+          </tbody>
+        </table>
+      </section>
+      {% endif %}
+
+      {% if show_patients %}
+      <section class="panel">
+        <h3>Patients</h3>
+        <table class="table">
+          <thead><tr><th>Username</th><th>Name</th><th>Email</th><th>Actions</th></tr></thead>
+          <tbody>
+            {% for user in patients %}
+            <tr>
+              <td>{{ user.username }}</td>
+              <td>{{ user.get_full_name|default:'-' }}</td>
+              <td>{{ user.email|default:'-' }}</td>
+              <td class="action-row">
+                <a class="btn btn-outline" href="/admin/staff/user/{{ user.id }}/edit/">Edit</a>
+                <form method="post" action="/admin/staff/user/{{ user.id }}/delete/" onsubmit="return confirm('Delete patient {{ user.username }}?');">
+                  {% csrf_token %}
+                  <button class="btn btn-primary" type="submit">Delete</button>
+                </form>
+              </td>
+            </tr>
+            {% empty %}
+            <tr><td colspan="4">No patients yet.</td></tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </section>
+      {% endif %}
+    </div>
+
+    <div class="tab-pane fade" id="pane-availability" role="tabpanel">
+      <section class="panel">
+        <h3>Doctor Availability Control</h3>
+        <p class="muted">Set availability at clinic start so online booking and walk-in token creation follow this status.</p>
+        <table class="table">
+          <thead><tr><th>Doctor</th><th>Status</th><th>Action</th></tr></thead>
+          <tbody>
+            {% for doctor in all_doctors %}
+              <tr>
+                <td>Dr. {{ doctor.user.get_full_name|default:doctor.user.username }}</td>
+                <td>
+                  {% if doctor.is_available %}
+                    <span class="badge text-bg-success">Available</span>
+                  {% else %}
+                    <span class="badge text-bg-secondary">Unavailable</span>
+                  {% endif %}
+                </td>
+                <td>
+                  <form method="post" action="/admin/doctors/{{ doctor.id }}/availability/toggle/" class="inline-form">
+                    {% csrf_token %}
+                    <input type="hidden" name="next" value="/admin/staff/" />
+                    <button class="btn btn-outline" type="submit">
+                      {% if doctor.is_available %}Mark Unavailable{% else %}Mark Available{% endif %}
+                    </button>
+                  </form>
+                </td>
+              </tr>
+            {% empty %}
+              <tr><td colspan="3">No doctors found.</td></tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </section>
+    </div>
+  </div>
+</section>
+{% endblock %}

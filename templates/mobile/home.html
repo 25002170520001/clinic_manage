@@ -1,0 +1,81 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block title %}Family Health Care App{% endblock %}
+{% block content %}
+<section class="panel mobile-hero-app">
+  <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:10px;">
+    <div>
+      <p class="eyebrow" style="background:rgba(255,255,255,.2);color:#fff;">Mobile App</p>
+      <h1 style="margin:8px 0 6px;font-size:1.6rem;">Find Your Doctor Fast</h1>
+      <p style="margin:0;">Token-first clinic flow, appointments, and live queue updates.</p>
+    </div>
+    <img src="{% static 'images/clinic-logo.png' %}" alt="Family Health Care Logo" style="width:56px;height:56px;object-fit:contain;border-radius:12px;background:rgba(255,255,255,.2);padding:5px;">
+  </div>
+</section>
+
+<section class="panel">
+  <div class="mobile-search-box">
+    <i class="bi bi-search"></i>
+    <span>Search doctors, services, or specialization</span>
+  </div>
+  <div class="mobile-chip-row" style="margin-top:10px;">
+    {% for item in specialization_counts %}
+      <span class="mobile-chip {% if forloop.first %}active{% endif %}">
+        {{ item.specialization }}{% if item.total %} ({{ item.total }}){% endif %}
+      </span>
+    {% empty %}
+      <span class="mobile-chip active">No specializations yet</span>
+    {% endfor %}
+  </div>
+</section>
+
+<section class="panel">
+  <h3 style="margin:0 0 10px;">Top Doctor</h3>
+  <article class="mobile-hero-app" style="border-radius:14px;padding:12px;">
+    {% if top_doctor %}
+      <p style="margin:0;font-size:.8rem;opacity:.9;">{{ top_doctor.specialization }}</p>
+      <h3 style="margin:2px 0 6px;">Dr. {{ top_doctor.user.get_full_name|default:top_doctor.user.username }}</h3>
+      <p style="margin:0 0 10px;font-size:.85rem;">
+        {{ top_doctor.experience }} yrs exp • Fee Rs {{ top_doctor.consultation_fee }}
+      </p>
+      <div class="mobile-chip-row">
+        <span class="mobile-chip" style="background:rgba(255,255,255,.22);border-color:transparent;color:#fff;">
+          {% if top_doctor.is_available %}Available{% else %}Unavailable{% endif %}
+        </span>
+        <span class="mobile-chip" style="background:rgba(255,255,255,.22);border-color:transparent;color:#fff;">
+          Doctors {{ doctor_count }}
+        </span>
+        <span class="mobile-chip" style="background:#fff;border-color:#fff;color:#1b77b7;">
+          Online {{ available_doctor_count }}
+        </span>
+      </div>
+    {% else %}
+      <h3 style="margin:2px 0 6px;">No doctor profile available</h3>
+      <p style="margin:0;font-size:.85rem;">Admin can add doctor profiles from staff management.</p>
+    {% endif %}
+  </article>
+</section>
+
+<section class="panel">
+  <h3 style="margin:0 0 10px;">Clinic Highlights</h3>
+  <div class="mobile-mini-grid">
+    <article class="mobile-mini-card">
+      <i class="bi bi-hospital" style="font-size:1.1rem;color:var(--primary);"></i>
+      <h4 style="margin:8px 0 2px;">Total Doctors</h4>
+      <p class="muted" style="margin:0;">{{ doctor_count }}</p>
+    </article>
+    <article class="mobile-mini-card">
+      <i class="bi bi-person-check" style="font-size:1.1rem;color:var(--primary);"></i>
+      <h4 style="margin:8px 0 2px;">Available Now</h4>
+      <p class="muted" style="margin:0;">{{ available_doctor_count }}</p>
+    </article>
+  </div>
+</section>
+
+<section class="panel">
+  <div class="cta-row cta-row-2" style="margin-top:0;">
+    <a href="/login/" class="btn btn-primary">Login</a>
+    <a href="/signup/" class="btn btn-outline">Signup</a>
+  </div>
+</section>
+{% endblock %}

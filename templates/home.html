@@ -1,0 +1,111 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block title %}Family Health Care{% endblock %}
+{% block content %}
+<section class="hero-split">
+  <div class="hero-content">
+    <span class="hero-kicker">Queue-first clinic experience</span>
+    <h1 class="hero-title">Family Health Care, streamlined for speed and trust.</h1>
+    <p class="hero-subtitle">
+      No time-slot booking. Patients get instant tokens, queue priority stays fair,
+      and every role has a focused workflow built for real OPD pace.
+    </p>
+    <div class="hero-actions">
+      <a href="/signup/" class="btn btn-primary">Patient Signup</a>
+      <a href="/login/" class="btn btn-outline">Login</a>
+    </div>
+    <section class="stat-strip">
+      <article class="stat-chip">
+        <h4>Instant Tokens</h4>
+        <p>Auto-generated with priority rules.</p>
+      </article>
+      <article class="stat-chip">
+        <h4>Live Queue</h4>
+        <p>Doctor, reception, and TV sync.</p>
+      </article>
+      <article class="stat-chip">
+        <h4>One System</h4>
+        <p>Appointments, billing, and Rx.</p>
+      </article>
+    </section>
+  </div>
+  <div class="hero-visual">
+    <div class="hero-card-stack">
+      <div class="glass-panel">
+        <div class="hero-logo-wrap" style="justify-content:flex-start;">
+          <img src="{% static 'images/clinic-logo.png' %}" alt="Family Health Care Logo" class="hero-logo" />
+        </div>
+        <p class="muted" style="margin:6px 0 0;">Family Health Care</p>
+        <h3 class="hero-card-title">Clinic Services</h3>
+        <ul class="plain-list">
+          <li>Token-based queue management</li>
+          <li>Doctor availability & consult flow</li>
+          <li>Billing, receipts, and prescriptions</li>
+        </ul>
+      </div>
+      <div class="glass-panel">
+        <h3 class="hero-card-title">What feels different</h3>
+        <p class="muted" style="margin:0;">
+          Patients move faster, staff work with clarity, and every interaction is tracked.
+        </p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="feature-grid">
+  <article class="feature-card">
+    <i class="bi bi-person-heart" style="font-size:1.2rem;color:var(--primary);"></i>
+    <h3>Patient-first flow</h3>
+    <p>Track token status, wait time, and prescriptions from one place.</p>
+  </article>
+  <article class="feature-card">
+    <i class="bi bi-person-workspace" style="font-size:1.2rem;color:var(--primary);"></i>
+    <h3>Doctor console</h3>
+    <p>Call next patient, view history, and finish consult with clean notes.</p>
+  </article>
+  <article class="feature-card">
+    <i class="bi bi-front" style="font-size:1.2rem;color:var(--primary);"></i>
+    <h3>Reception control</h3>
+    <p>Walk-in registration, check-ins, and queue adjustments without confusion.</p>
+  </article>
+</section>
+
+<section class="panel">
+  <h3 style="margin-top:0;">How Queue Priority Works</h3>
+  <div class="process-steps">
+    <div class="process-step">
+      <span class="step-index">1</span>
+      <div>
+        <strong>Appointment tokens</strong>
+        <p class="muted" style="margin:4px 0 0;">A-xx tokens get priority level 2.</p>
+      </div>
+    </div>
+    <div class="process-step">
+      <span class="step-index">2</span>
+      <div>
+        <strong>Walk-in tokens</strong>
+        <p class="muted" style="margin:4px 0 0;">W-xx tokens stay priority level 1.</p>
+      </div>
+    </div>
+    <div class="process-step">
+      <span class="step-index">3</span>
+      <div>
+        <strong>Anti-misuse rule</strong>
+        <p class="muted" style="margin:4px 0 0;">If booking happens after arrival, it becomes walk-in priority.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="cta-banner">
+  <div>
+    <h3 style="margin:0 0 6px;">Ready to run OPD without chaos?</h3>
+    <p style="margin:0;opacity:.9;">Start with patient signup or jump into your role dashboard.</p>
+  </div>
+  <div class="hero-actions" style="margin:0;">
+    <a href="/signup/" class="btn btn-primary">Get Started</a>
+    <a href="/login/" class="btn btn-outline">Login</a>
+  </div>
+</section>
+{% endblock %}

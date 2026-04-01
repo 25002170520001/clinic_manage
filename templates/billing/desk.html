@@ -1,0 +1,148 @@
+{% extends "base.html" %}
+{% block title %}Billing Desk{% endblock %}
+{% block page_heading %}Billing Desk{% endblock %}
+{% block content %}
+<section class="hero hero-small">
+  <div>
+    <p class="eyebrow">Billing</p>
+    <h1>Consultation Billing & Payments</h1>
+    <p class="lead">Default fee logic: new patient Rs 100, returning patient Rs 80.</p>
+  </div>
+</section>
+
+<section class="stats">
+  <article><h3>{{ pending_bills|length }}</h3><p>Pending Bills</p></article>
+  <article><h3>{{ recent_paid_bills|length }}</h3><p>Recent Paid</p></article>
+  <article><h3>{% if clinic_settings.cash_enabled %}ON{% else %}OFF{% endif %} / {% if clinic_settings.online_enabled %}ON{% else %}OFF{% endif %}</h3><p>Cash / Online</p></article>
+  <article><h3>{% if clinic_settings.sms_enabled %}ON{% else %}OFF{% endif %} / {% if clinic_settings.whatsapp_enabled %}ON{% else %}OFF{% endif %}</h3><p>SMS / WhatsApp</p></article>
+</section>
+
+{% if user.role == "admin" or user.is_superuser %}
+<section class="panel">
+  <h3>Payment Feature Toggles (Admin)</h3>
+  <form method="post" action="/billing/settings/update/" class="form-grid">
+    {% csrf_token %}
+    {% for field in settings_form %}
+      <div>
+        <label>{{ field.label }}</label>
+        {{ field }}
+        {% if field.errors %}<small class="error">{{ field.errors|striptags }}</small>{% endif %}
+      </div>
+    {% endfor %}
+    <button class="btn btn-primary" type="submit">Save Billing Settings</button>
+  </form>
+  <p class="muted" style="margin-top:10px;">
+    Keep <strong>Online Enabled</strong> OFF for cash-only billing. Turn it ON when UPI/QR is ready.
+  </p>
+  <p class="muted" style="margin-top:6px;">
+    Keep <strong>SMS</strong> and <strong>WhatsApp</strong> OFF to disable those features completely.
+  </p>
+</section>
+{% endif %}
+
+{% if clinic_settings.online_enabled %}
+<section class="panel">
+  <h3>Online Payment Details</h3>
+  <p><strong>UPI ID:</strong> {{ clinic_settings.upi_id|default:"Not set" }}</p>
+  {% if clinic_settings.upi_qr_image_url %}
+    <img src="{{ clinic_settings.upi_qr_image_url }}" alt="UPI QR" style="max-width:220px;border-radius:10px;border:1px solid var(--line);padding:6px;background:var(--surface);" />
+  {% else %}
+    <p class="muted">UPI QR image URL not set.</p>
+  {% endif %}
+</section>
+{% endif %}
+
+<section class="panel">
+  <h3>Pending Bills</h3>
+  <table class="table">
+    <thead>
+      <tr>
+        <th>Bill #</th>
+        <th>Patient</th>
+        <th>Doctor</th>
+        <th>Amount</th>
+        <th>Collect Payment</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for bill in pending_bills %}
+        <tr>
+          <td>{{ bill.bill_number }}</td>
+          <td>{{ bill.patient.get_full_name|default:bill.patient.username }}</td>
+          <td>Dr. {{ bill.doctor.user.get_full_name|default:bill.doctor.user.username }}</td>
+          <td>Rs {{ bill.total_amount }}</td>
+          <td>
+            <form method="post" action="/billing/bill/{{ bill.id }}/collect/" class="form-grid">
+              {% csrf_token %}
+              <div>
+                <label>Method</label>
+                <select class="form-input" name="payment_method" required>
+                  {% if clinic_settings.cash_enabled %}<option value="cash">Cash</option>{% endif %}
+                  {% if clinic_settings.online_enabled %}
+                    <option value="upi">UPI</option>
+                    <option value="online">Online</option>
+                  {% endif %}
+                </select>
+              </div>
+              <div>
+                <label>Transaction ID (for online)</label>
+                <input class="form-input" type="text" name="transaction_id" />
+              </div>
+              <div>
+                <label>Notes</label>
+                <input class="form-input" type="text" name="notes" />
+              </div>
+              <button class="btn btn-primary" type="submit">Mark Paid</button>
+            </form>
+          </td>
+        </tr>
+      {% empty %}
+        <tr><td colspan="5">No pending bills.</td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</section>
+
+<section class="panel">
+  <h3>Recently Paid Bills</h3>
+  <p class="muted">Send patient update manually from admin/reception phone (no SMS/WhatsApp API required).</p>
+  <table class="table">
+    <thead>
+      <tr>
+        <th>Bill #</th>
+        <th>Patient</th>
+        <th>Phone</th>
+        <th>Amount</th>
+        <th>Updated</th>
+        <th>Send Message</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for row in recent_paid_rows %}
+        {% with bill=row.bill links=row.links %}
+        <tr>
+          <td>{{ bill.bill_number }}</td>
+          <td>{{ bill.patient.get_full_name|default:bill.patient.username }}</td>
+          <td>{{ bill.patient.phone|default:"Not set" }}</td>
+          <td>Rs {{ bill.total_amount }}</td>
+          <td>{{ bill.updated_at|date:"M d, H:i" }}</td>
+          <td>
+            {% if links.whatsapp_url %}
+              <a class="btn btn-outline" href="{{ links.whatsapp_url }}" target="_blank" rel="noopener">WhatsApp</a>
+            {% endif %}
+            {% if links.sms_url %}
+              <a class="btn btn-outline" href="{{ links.sms_url }}">SMS</a>
+            {% endif %}
+            {% if not links.whatsapp_url and not links.sms_url %}
+              <span class="muted">Patient phone missing</span>
+            {% endif %}
+          </td>
+        </tr>
+        {% endwith %}
+      {% empty %}
+        <tr><td colspan="6">No paid bills yet.</td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</section>
+{% endblock %}

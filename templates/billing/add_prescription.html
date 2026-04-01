@@ -1,0 +1,135 @@
+{% extends 'base.html' %}
+{% block title %}Add Prescription{% endblock %}
+{% block page_heading %}Prescription Builder{% endblock %}
+{% block content %}
+<section class="panel wide">
+  <h2>Add Prescription - {{ token.token_display }}</h2>
+  <p class="muted">Drag rows to reorder medicines. Add dose, frequency, days, tablets and food timing.</p>
+
+  <form method="post" class="form-stack" id="prescription-form">
+    {% csrf_token %}
+    {% if form.non_field_errors %}
+      <div class="error">
+        {% for err in form.non_field_errors %}
+          <div>{{ err }}</div>
+        {% endfor %}
+      </div>
+    {% endif %}
+
+    <section class="form-grid">
+      {% for field in form %}
+      <div>
+        <label>{{ field.label }}</label>
+        {{ field }}
+        {% if field.errors %}<small class="error">{{ field.errors|striptags }}</small>{% endif %}
+      </div>
+      {% endfor %}
+    </section>
+
+    <section class="panel" style="margin-top:12px;">
+      <div class="d-flex justify-content-between align-items-center" style="margin-bottom:10px;">
+        <h3 style="margin:0;">Medicines</h3>
+        <button type="button" class="btn btn-outline" id="add-row-btn"><i class="bi bi-plus-circle"></i> Add Medicine</button>
+      </div>
+
+      <div id="medicine-list" class="form-stack">
+        {% for m in medicine_items %}
+        <div class="medicine-row panel" draggable="true">
+          <div class="d-flex justify-content-between align-items-center" style="margin-bottom:8px;">
+            <strong><i class="bi bi-grip-vertical"></i> Medicine</strong>
+            <button type="button" class="btn btn-outline remove-row-btn"><i class="bi bi-trash"></i> Remove</button>
+          </div>
+          <div class="form-grid">
+            <div><label>Name</label><input class="form-input" name="medicine_name[]" value="{{ m.medicine_name }}" required></div>
+            <div><label>Dose</label><input class="form-input" name="medicine_dose[]" value="{{ m.dose|default:'' }}" placeholder="e.g. 500mg"></div>
+            <div><label>Times/Day</label><input class="form-input" type="number" min="1" name="medicine_times[]" value="{{ m.times_per_day }}"></div>
+            <div><label>Days</label><input class="form-input" type="number" min="1" name="medicine_days[]" value="{{ m.duration_days }}"></div>
+            <div><label>Total Tablets</label><input class="form-input" type="number" min="1" name="medicine_qty[]" value="{{ m.quantity_tablets }}"></div>
+            <div>
+              <label>Timing</label>
+              <select class="form-input" name="medicine_timing[]">
+                <option value="before_food" {% if m.timing == 'before_food' %}selected{% endif %}>Before Food</option>
+                <option value="after_food" {% if m.timing == 'after_food' %}selected{% endif %}>After Food</option>
+                <option value="with_food" {% if m.timing == 'with_food' %}selected{% endif %}>With Food</option>
+                <option value="bedtime" {% if m.timing == 'bedtime' %}selected{% endif %}>Bedtime</option>
+                <option value="custom" {% if m.timing == 'custom' %}selected{% endif %}>Custom</option>
+              </select>
+            </div>
+            <div style="grid-column: 1 / -1;"><label>Instruction</label><input class="form-input" name="medicine_instruction[]" value="{{ m.instruction|default:'' }}" placeholder="before sleep / morning only / etc"></div>
+          </div>
+        </div>
+        {% endfor %}
+      </div>
+      <small class="muted">At least one medicine row is required.</small>
+    </section>
+
+    <button class="btn btn-primary" type="submit"><i class="bi bi-save"></i> Save Prescription</button>
+  </form>
+</section>
+
+<template id="medicine-row-template">
+  <div class="medicine-row panel" draggable="true">
+    <div class="d-flex justify-content-between align-items-center" style="margin-bottom:8px;">
+      <strong><i class="bi bi-grip-vertical"></i> Medicine</strong>
+      <button type="button" class="btn btn-outline remove-row-btn"><i class="bi bi-trash"></i> Remove</button>
+    </div>
+    <div class="form-grid">
+      <div><label>Name</label><input class="form-input" name="medicine_name[]" required></div>
+      <div><label>Dose</label><input class="form-input" name="medicine_dose[]" placeholder="e.g. 500mg"></div>
+      <div><label>Times/Day</label><input class="form-input" type="number" min="1" name="medicine_times[]" value="1"></div>
+      <div><label>Days</label><input class="form-input" type="number" min="1" name="medicine_days[]" value="1"></div>
+      <div><label>Total Tablets</label><input class="form-input" type="number" min="1" name="medicine_qty[]" value="1"></div>
+      <div>
+        <label>Timing</label>
+        <select class="form-input" name="medicine_timing[]">
+          <option value="before_food">Before Food</option>
+          <option value="after_food" selected>After Food</option>
+          <option value="with_food">With Food</option>
+          <option value="bedtime">Bedtime</option>
+          <option value="custom">Custom</option>
+        </select>
+      </div>
+      <div style="grid-column: 1 / -1;"><label>Instruction</label><input class="form-input" name="medicine_instruction[]" placeholder="before sleep / morning only / etc"></div>
+    </div>
+  </div>
+</template>
+
+<script>
+(function() {
+  const list = document.getElementById('medicine-list');
+  const template = document.getElementById('medicine-row-template');
+  const addBtn = document.getElementById('add-row-btn');
+
+  function bindRow(row) {
+    row.querySelector('.remove-row-btn').addEventListener('click', () => {
+      row.remove();
+      if (!list.children.length) addRow();
+    });
+
+    row.addEventListener('dragstart', () => row.classList.add('dragging'));
+    row.addEventListener('dragend', () => row.classList.remove('dragging'));
+  }
+
+  function addRow() {
+    const row = template.content.firstElementChild.cloneNode(true);
+    bindRow(row);
+    list.appendChild(row);
+  }
+
+  addBtn.addEventListener('click', addRow);
+
+  list.addEventListener('dragover', (e) => {
+    e.preventDefault();
+    const dragging = list.querySelector('.dragging');
+    if (!dragging) return;
+    const rows = [...list.querySelectorAll('.medicine-row:not(.dragging)')];
+    const next = rows.find(r => e.clientY <= r.getBoundingClientRect().top + r.offsetHeight / 2);
+    if (next) list.insertBefore(dragging, next);
+    else list.appendChild(dragging);
+  });
+
+  [...list.querySelectorAll('.medicine-row')].forEach(bindRow);
+  if (!list.children.length) addRow();
+})();
+</script>
+{% endblock %}

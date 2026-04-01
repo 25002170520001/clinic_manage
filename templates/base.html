@@ -1,0 +1,289 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <meta name="theme-color" content="#2f8f67" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+  <meta name="apple-mobile-web-app-title" content="Family Health Care" />
+  <title>{% block title %}Family Health Care{% endblock %}</title>
+  <script>
+    (function () {
+      const pref = localStorage.getItem("fhc_theme") || "system";
+      const prefersDark = window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)").matches;
+      const effective = pref === "system" ? (prefersDark ? "dark" : "light") : pref;
+      document.documentElement.setAttribute("data-theme-pref", pref);
+      document.documentElement.setAttribute("data-theme", effective);
+    })();
+  </script>
+  <link rel="icon" type="image/png" href="{% static 'images/clinic-logo.png' %}">
+  <link rel="apple-touch-icon" href="{% static 'images/clinic-logo.png' %}">
+  <link rel="manifest" href="/manifest.webmanifest">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;600;700;800&family=Space+Grotesk:wght@500;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/static/css/site.css?v=20260227b" />
+  {% if is_mobile %}
+    <link rel="stylesheet" href="/static/css/mobile-app.css?v=20260227b" />
+  {% endif %}
+</head>
+<body class="{% if is_mobile %}is-mobile{% endif %}">
+  <div class="bg-shape bg-shape-1"></div>
+  <div class="bg-shape bg-shape-2"></div>
+
+  <div class="layout {% if user.is_authenticated and request.path != '/' %}layout-auth role-{{ user.role }}{% else %}layout-public{% endif %} {% if is_mobile %}device-mobile{% else %}device-desktop{% endif %}">
+    {% if user.is_authenticated and request.path != '/' %}
+      <aside class="sidebar desktop-shell">
+        <a class="brand brand-with-logo" href="/dashboard/">
+          <img src="{% static 'images/clinic-logo.png' %}" onerror="this.onerror=null;this.src='{% static 'images/clinic-logo.svg' %}'" alt="Family Health Care Logo" class="brand-logo" style="width:78px;height:78px;object-fit:contain;" />
+          <span>Family Health Care</span>
+        </a>
+        <p class="role-badge">{% if user.is_superuser %}Super Admin{% else %}{{ user.role|title }}{% endif %}</p>
+        <nav class="side-nav">
+          <a href="/dashboard/" class="{% if '/dashboard/' in request.path %}active{% endif %}"><i class="bi bi-speedometer2"></i> Dashboard</a>
+          <a href="/profile/" class="{% if '/profile/' in request.path %}active{% endif %}"><i class="bi bi-person-circle"></i> My Profile</a>
+          <a href="/settings/theme/" class="{% if '/settings/theme/' in request.path %}active{% endif %}"><i class="bi bi-circle-half"></i> Theme Settings</a>
+          {% if user.role == 'patient' %}
+            <a href="/patient/appointments/book/" class="{% if '/patient/appointments/book/' in request.path %}active{% endif %}"><i class="bi bi-calendar-plus"></i> Book Appointment</a>
+            <a href="/patient/appointments/my/" class="{% if '/patient/appointments/my/' in request.path %}active{% endif %}"><i class="bi bi-calendar-check"></i> My Appointments</a>
+            <a href="/patient/prescriptions/" class="{% if '/patient/prescriptions/' in request.path %}active{% endif %}"><i class="bi bi-file-earmark-medical"></i> My Prescriptions</a>
+          {% endif %}
+          {% if user.role == 'doctor' %}
+            <a href="/doctor/" class="{% if '/doctor/' in request.path %}active{% endif %}"><i class="bi bi-person-workspace"></i> Doctor Queue</a>
+          {% endif %}
+          {% if user.role == 'receptionist' %}
+            <a href="/reception/" class="{% if '/reception/' in request.path %}active{% endif %}"><i class="bi bi-list-ol"></i> Reception Queue</a>
+            <a href="/billing/desk/" class="{% if '/billing/desk/' in request.path %}active{% endif %}"><i class="bi bi-cash-coin"></i> Billing Desk</a>
+            <a href="/reception/tv/" class="{% if '/reception/tv/' in request.path %}active{% endif %}"><i class="bi bi-tv"></i> TV Launcher</a>
+          {% endif %}
+          {% if user.role == 'admin' or user.is_superuser %}
+            <a href="/admin/staff/" class="{% if '/admin/staff/' in request.path %}active{% endif %}"><i class="bi bi-people"></i> Manage Staff</a>
+            <a href="/billing/desk/" class="{% if '/billing/desk/' in request.path %}active{% endif %}"><i class="bi bi-cash-coin"></i> Billing Desk</a>
+          {% endif %}
+        </nav>
+      </aside>
+    {% endif %}
+
+    <div class="main-wrap">
+      {% if user.is_authenticated and request.path != '/' %}
+        <header class="mobile-app-header mobile-shell">
+          <div class="mobile-head-row">
+            <a href="/profile/" class="mobile-profile-pill">
+              <span class="user-chip-avatar">{{ user.first_name|default:user.username|slice:":1"|upper }}</span>
+              <span>{{ user.get_full_name|default:user.username }}</span>
+            </a>
+            <div class="mobile-head-actions">
+              <a href="/settings/theme/" class="mobile-icon-btn" aria-label="Theme"><i class="bi bi-circle-half"></i></a>
+              <form method="post" action="/logout/" class="inline-form">
+                {% csrf_token %}
+                <button type="submit" class="mobile-icon-btn" aria-label="Logout"><i class="bi bi-box-arrow-right"></i></button>
+              </form>
+            </div>
+          </div>
+        </header>
+        <header class="mobile-role-strip mobile-shell">
+          <h2 class="app-title">{{ user.role|title }} Workspace</h2>
+          <p class="app-subtitle">Family Health Care</p>
+          <div class="mobile-quick-actions">
+            {% if user.role == 'doctor' %}
+              <a href="/doctor/" class="btn btn-outline">My Queue</a>
+            {% elif user.role == 'receptionist' %}
+              <a href="/reception/" class="btn btn-outline">Reception</a>
+              <a href="/billing/desk/" class="btn btn-outline">Billing</a>
+            {% elif user.role == 'patient' %}
+              <a href="/patient/appointments/book/" class="btn btn-outline">Book</a>
+              <a href="/patient/prescriptions/" class="btn btn-outline">Rx</a>
+            {% else %}
+              <a href="/admin/staff/" class="btn btn-outline">Staff</a>
+              <a href="/billing/desk/" class="btn btn-outline">Billing</a>
+            {% endif %}
+          </div>
+        </header>
+        <header class="app-header desktop-shell">
+          <div>
+            <h2 class="app-title">{% block page_heading %}Clinic Workspace{% endblock %}</h2>
+            <p class="app-subtitle">Welcome, {{ user.get_full_name|default:user.username }}</p>
+            <p class="app-subtitle" id="live-datetime"></p>
+          </div>
+          <div class="app-actions">
+            <a href="/profile/" class="user-chip">
+              <span class="user-chip-avatar">{{ user.first_name|default:user.username|slice:":1"|upper }}</span>
+              <span class="user-chip-name">{{ user.get_full_name|default:user.username }}</span>
+            </a>
+            <a href="/settings/theme/" class="btn btn-outline">Theme</a>
+            {% if user.role == 'admin' or user.is_superuser %}
+              <a href="/admin/staff/" class="btn btn-outline">Staff</a>
+              <a href="/billing/desk/" class="btn btn-outline">Billing</a>
+            {% elif user.role == 'doctor' %}
+              <a href="/doctor/" class="btn btn-outline">My Queue</a>
+            {% elif user.role == 'receptionist' %}
+              <a href="/reception/" class="btn btn-outline">Desk</a>
+              <a href="/billing/desk/" class="btn btn-outline">Billing</a>
+            {% else %}
+              <a href="/patient/appointments/my/" class="btn btn-outline">My Appointments</a>
+            {% endif %}
+            <form method="post" action="/logout/" class="inline-form">
+              {% csrf_token %}
+              <button type="submit" class="btn btn-primary">Logout</button>
+            </form>
+          </div>
+        </header>
+      {% else %}
+        <header class="topbar topbar-public {% if is_mobile %}topbar-mobile{% endif %}">
+          <a class="brand brand-with-logo" href="/">
+            <img src="{% static 'images/clinic-logo.png' %}" onerror="this.onerror=null;this.src='{% static 'images/clinic-logo.svg' %}'" alt="Family Health Care Logo" class="brand-logo" style="width:42px;height:42px;object-fit:contain;" />
+            <span>Family Health Care</span>
+          </a>
+          <nav>
+            <a href="/">Home</a>
+            {% if user.is_authenticated %}
+              <a href="/dashboard/">Dashboard</a>
+            {% else %}
+              <a href="/login/">Login</a>
+              <a href="/signup/">Patient Signup</a>
+            {% endif %}
+          </nav>
+        </header>
+      {% endif %}
+
+      <main class="container {% if user.is_authenticated and request.path != '/' %}app-container{% endif %}{% if is_mobile %} mobile-main{% endif %}">
+        {% if messages %}
+          <section class="messages">
+            {% for message in messages %}
+              <div class="message {{ message.tags }}">{{ message }}</div>
+            {% endfor %}
+          </section>
+        {% endif %}
+        {% block content %}{% endblock %}
+      </main>
+
+      {% if user.is_authenticated and request.path != '/' %}
+        <nav class="mobile-nav mobile-shell">
+          <a href="/dashboard/" class="{% if '/dashboard/' in request.path %}active{% endif %}">
+            <i class="bi bi-speedometer2"></i><span>Dashboard</span>
+          </a>
+          {% if user.role == 'doctor' %}
+            <a href="/doctor/" class="{% if '/doctor/' in request.path %}active{% endif %}">
+              <i class="bi bi-list-ol"></i><span>Queue</span>
+            </a>
+          {% elif user.role == 'receptionist' %}
+            <a href="/reception/" class="{% if '/reception/' in request.path %}active{% endif %}">
+              <i class="bi bi-list-ol"></i><span>Desk</span>
+            </a>
+          {% elif user.role == 'patient' %}
+            <a href="/patient/appointments/my/" class="{% if '/patient/appointments/' in request.path %}active{% endif %}">
+              <i class="bi bi-calendar-check"></i><span>Appointments</span>
+            </a>
+          {% else %}
+            <a href="/admin/staff/" class="{% if '/admin/staff/' in request.path %}active{% endif %}">
+              <i class="bi bi-people"></i><span>Staff</span>
+            </a>
+          {% endif %}
+          {% if user.role == 'receptionist' or user.role == 'admin' or user.is_superuser %}
+            <a href="/billing/desk/" class="{% if '/billing/desk/' in request.path %}active{% endif %}">
+              <i class="bi bi-cash-coin"></i><span>Billing</span>
+            </a>
+          {% else %}
+            <a href="/settings/theme/" class="{% if '/settings/theme/' in request.path %}active{% endif %}">
+              <i class="bi bi-circle-half"></i><span>Theme</span>
+            </a>
+          {% endif %}
+          <a href="/profile/" class="{% if '/profile/' in request.path %}active{% endif %}">
+            <i class="bi bi-person-circle"></i><span>Profile</span>
+          </a>
+        </nav>
+      {% endif %}
+
+      {% if user.is_authenticated and request.path != '/' %}
+        <footer class="app-footer">
+          {% if user.role == 'patient' %}
+            <span>Patient Portal: token tracking, appointments, and queue updates.</span>
+          {% elif user.role == 'doctor' %}
+            <span>Doctor Console: queue flow, consultations, and prescriptions.</span>
+          {% elif user.role == 'receptionist' %}
+            <span>Reception Desk: walk-ins, check-in, and live token operations.</span>
+          {% else %}
+            <span>Admin Control: staff management, clinic operations, and oversight.</span>
+          {% endif %}
+        </footer>
+      {% else %}
+        <footer class="public-footer">Family Health Care | Queue-first OPD experience</footer>
+      {% endif %}
+    </div>
+  </div>
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+  <script>
+    (function () {
+      function applyTheme(pref) {
+        const prefersDark = window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)").matches;
+        const effective = pref === "system" ? (prefersDark ? "dark" : "light") : pref;
+        document.documentElement.setAttribute("data-theme-pref", pref);
+        document.documentElement.setAttribute("data-theme", effective);
+      }
+
+      window.setThemePreference = function (pref) {
+        localStorage.setItem("fhc_theme", pref);
+        applyTheme(pref);
+      };
+
+      const mq = window.matchMedia ? window.matchMedia("(prefers-color-scheme: dark)") : null;
+      if (mq) {
+        const syncSystem = function () {
+          const pref = localStorage.getItem("fhc_theme") || "system";
+          if (pref === "system") applyTheme("system");
+        };
+        if (mq.addEventListener) mq.addEventListener("change", syncSystem);
+        else if (mq.addListener) mq.addListener(syncSystem);
+      }
+    })();
+  </script>
+  <script>
+    (function () {
+      const el = document.getElementById("live-datetime");
+      if (!el) return;
+      function tick() {
+        const d = new Date();
+        el.textContent = d.toLocaleString();
+      }
+      tick();
+      setInterval(tick, 1000);
+    })();
+  </script>
+  <script>
+    (function () {
+      if (!("serviceWorker" in navigator)) return;
+      window.addEventListener("load", function () {
+        navigator.serviceWorker.register("/sw.js").catch(function () {});
+      });
+    })();
+  </script>
+  <script>
+    (function () {
+      document.querySelectorAll("table.table").forEach(function (table) {
+        if (table.parentElement && table.parentElement.classList.contains("table-responsive")) return;
+        var wrapper = document.createElement("div");
+        wrapper.className = "table-responsive";
+        table.parentNode.insertBefore(wrapper, table);
+        wrapper.appendChild(table);
+      });
+
+      document.querySelectorAll(".table").forEach(function (table) {
+        var heads = Array.from(table.querySelectorAll("thead th")).map(function (th) {
+          return th.textContent.trim();
+        });
+        table.querySelectorAll("tbody tr").forEach(function (row) {
+          Array.from(row.children).forEach(function (cell, idx) {
+            if (!cell.getAttribute("data-label")) {
+              cell.setAttribute("data-label", heads[idx] || "");
+            }
+          });
+        });
+      });
+    })();
+  </script>
+</body>
+</html>

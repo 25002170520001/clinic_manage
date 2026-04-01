@@ -1,0 +1,138 @@
+{% extends 'base.html' %}
+{% block title %}Admin Dashboard{% endblock %}
+{% block page_heading %}Admin Control Center{% endblock %}
+{% block content %}
+<section class="hero hero-small">
+  <div>
+    <p class="eyebrow">Admin Dashboard</p>
+    <h1>Clinic Operations Overview</h1>
+    <p class="lead">Live staffing, queue pressure, and appointment activity in one place.</p>
+  </div>
+</section>
+
+<section class="panel">
+  <h3>Operational Alerts</h3>
+  <ul class="plain-list">
+    {% for item in admin_notifications %}
+      <li>{{ item.text }}</li>
+    {% endfor %}
+  </ul>
+</section>
+
+<section class="stats">
+  <article><h3>{{ doctor_count }}</h3><p>Doctors</p></article>
+  <article><h3>{{ receptionist_count }}</h3><p>Receptionists</p></article>
+  <article><h3>{{ patient_count }}</h3><p>Patients</p></article>
+</section>
+
+<section class="stats">
+  <article><h3>{{ today_appointments }}</h3><p>Today Appointments</p></article>
+  <article><h3>{{ waiting_tokens }}</h3><p>Waiting Tokens</p></article>
+  <article><h3>{{ in_consultation_tokens }}</h3><p>In Consultation</p></article>
+</section>
+
+<section class="stats">
+  <article><h3>{{ today_clinic_patients }}</h3><p>Patients Came Today</p></article>
+  <article><h3>{{ total_clinic_patient_visits }}</h3><p>Total Visits (Since Start)</p></article>
+  <article><h3>{{ total_unique_clinic_patients }}</h3><p>Total Unique Patients</p></article>
+</section>
+
+<section class="stats">
+  <article><h3>{{ pending_bills_count }}</h3><p>Pending Bills</p></article>
+  <article><h3>{{ paid_bills_count }}</h3><p>Paid Bills</p></article>
+  <article>
+    <h3>{% if clinic_payment_settings.cash_enabled %}Cash ON{% else %}Cash OFF{% endif %}</h3>
+    <p>{% if clinic_payment_settings.online_enabled %}Online ON{% else %}Online OFF{% endif %}</p>
+  </article>
+</section>
+
+<section class="panel">
+  <h3>Today Token Progress</h3>
+  <p class="lead">Tokens issued today: <strong>{{ tokens_issued_today }}</strong></p>
+  <p class="muted">Latest token: <strong>{% if latest_token_today %}{{ latest_token_today.token_display }}{% else %}-{% endif %}</strong></p>
+</section>
+
+<section class="grid-2">
+  <article class="panel">
+    <h3>Doctor Queue Snapshot</h3>
+    <table class="table">
+      <thead><tr><th>Doctor</th><th>Waiting</th></tr></thead>
+      <tbody>
+      {% for row in doctor_queue_snapshot %}
+        <tr>
+          <td>Dr. {{ row.user.get_full_name|default:row.user.username }}</td>
+          <td>{{ row.waiting_count }}</td>
+        </tr>
+      {% empty %}
+        <tr><td colspan="2">No doctors available.</td></tr>
+      {% endfor %}
+      </tbody>
+    </table>
+  </article>
+
+  <article class="panel">
+    <h3>Quick Actions</h3>
+    <div class="cta-row">
+      <a class="btn btn-primary" href="/admin/staff/">Add Doctor / Receptionist</a>
+      <a class="btn btn-outline" href="/billing/desk/">Billing & Payment Settings</a>
+      {% if user.is_superuser %}
+        <a class="btn btn-outline" href="/admin/">Django Admin</a>
+      {% endif %}
+    </div>
+    <p class="muted">Called tokens right now: <strong>{{ called_tokens }}</strong></p>
+  </article>
+</section>
+
+<section class="panel">
+  <h3>Doctor Availability Control</h3>
+  <p class="muted">Set availability at clinic start so online booking and walk-in token creation follow this status.</p>
+  <table class="table">
+    <thead><tr><th>Doctor</th><th>Current Status</th><th>Action</th></tr></thead>
+    <tbody>
+      {% for doctor in doctor_availability %}
+        <tr>
+          <td>Dr. {{ doctor.user.get_full_name|default:doctor.user.username }}</td>
+          <td>
+            {% if doctor.is_available %}
+              <span class="badge text-bg-success">Available</span>
+            {% else %}
+              <span class="badge text-bg-secondary">Unavailable</span>
+            {% endif %}
+          </td>
+          <td>
+            <form method="post" action="/admin/doctors/{{ doctor.id }}/availability/toggle/" class="inline-form">
+              {% csrf_token %}
+              <input type="hidden" name="next" value="/dashboard/admin/" />
+              <button class="btn btn-outline" type="submit">
+                {% if doctor.is_available %}Mark Unavailable{% else %}Mark Available{% endif %}
+              </button>
+            </form>
+          </td>
+        </tr>
+      {% empty %}
+        <tr><td colspan="3">No doctors found.</td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</section>
+
+<section class="panel">
+  <h3>Recent Appointments</h3>
+  <table class="table">
+    <thead><tr><th>#</th><th>Patient</th><th>Doctor</th><th>Status</th><th>Booked</th></tr></thead>
+    <tbody>
+      {% for appointment in recent_appointments %}
+        <tr>
+          <td>{{ appointment.id }}</td>
+          <td>{{ appointment.patient.get_full_name|default:appointment.patient.username }}</td>
+          <td>Dr. {{ appointment.doctor.user.get_full_name|default:appointment.doctor.user.username }}</td>
+          <td>{{ appointment.get_status_display }}</td>
+          <td>{{ appointment.created_at|date:"M d, H:i" }}</td>
+        </tr>
+      {% empty %}
+        <tr><td colspan="5">No appointments yet.</td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</section>
+{% endblock %}

@@ -1,0 +1,24 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block title %}Login{% endblock %}
+{% block content %}
+<section class="auth-wrap mobile-auth-shell">
+  <div class="panel mobile-auth-card">
+    <div style="text-align:center; margin-bottom:10px;">
+      <img src="{% static 'images/clinic-logo.png' %}" alt="Family Health Care Logo" style="width:92px; height:92px; object-fit:contain;" />
+    </div>
+    <h2 style="text-align:center;">Login</h2>
+    <p class="muted">Use your clinic account credentials.</p>
+    <form method="post" class="form-stack">
+      {% csrf_token %}
+      {{ form.non_field_errors }}
+      <label>Username</label>
+      {{ form.username }}
+      <label>Password</label>
+      {{ form.password }}
+      <button class="btn btn-primary" type="submit">Sign in</button>
+    </form>
+    <p class="muted" style="text-align:center;">New patient? <a href="/signup/">Create account</a></p>
+  </div>
+</section>
+{% endblock %}

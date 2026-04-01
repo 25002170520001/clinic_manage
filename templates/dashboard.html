@@ -1,0 +1,28 @@
+{% extends 'base.html' %}
+{% block title %}Dashboard{% endblock %}
+{% block content %}
+<section class="hero hero-small">
+  <div>
+    <p class="eyebrow">Welcome back</p>
+    <h1>{{ user.get_full_name|default:user.username }}</h1>
+    <p class="lead">Role: <strong>{{ role|title }}</strong></p>
+  </div>
+</section>
+
+<section class="stats">
+  <article><h3>{{ doctor_count }}</h3><p>Doctors</p></article>
+  <article><h3>{{ receptionist_count }}</h3><p>Receptionists</p></article>
+  <article><h3>{{ patient_count }}</h3><p>Patients</p></article>
+</section>
+
+<section class="panel">
+  <h3>Quick Access</h3>
+  <div class="cta-row">
+    <a class="btn btn-outline" href="/appointments/">Appointments API</a>
+    <a class="btn btn-outline" href="/queue/">Queue API</a>
+    {% if user.role == 'admin' or user.is_superuser %}
+      <a class="btn btn-primary" href="/admin/staff/">Add Doctor / Receptionist</a>
+    {% endif %}
+  </div>
+</section>
+{% endblock %}

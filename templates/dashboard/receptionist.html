@@ -1,0 +1,83 @@
+{% extends 'base.html' %}
+{% block title %}Receptionist Dashboard{% endblock %}
+{% block page_heading %}Reception Desk{% endblock %}
+{% block content %}
+<section class="hero hero-small">
+  <div>
+    <p class="eyebrow">Reception Desk</p>
+    <h1>Front Office Queue Control</h1>
+    <p class="lead">Register walk-ins, check-in arrivals, and keep doctor queues balanced.</p>
+  </div>
+</section>
+
+{% if reception_alerts %}
+<section class="panel">
+  <h3>Reception Alerts</h3>
+  <ul class="plain-list">
+    {% for alert in reception_alerts %}
+      <li>{{ alert }}</li>
+    {% endfor %}
+  </ul>
+</section>
+{% endif %}
+
+<section class="stats">
+  <article><h3>{{ today_appointments }}</h3><p>Today Appointments</p></article>
+  <article><h3>{{ walkins_today }}</h3><p>Walk-ins Today</p></article>
+  <article><h3>{{ waiting_tokens }}</h3><p>Waiting Tokens</p></article>
+</section>
+
+<section class="panel">
+  <h3>Today Token Progress</h3>
+  <p class="lead">Tokens issued today: <strong>{{ tokens_issued_today }}</strong></p>
+  <p class="muted">Latest token: <strong>{% if latest_token_today %}{{ latest_token_today.token_display }}{% else %}-{% endif %}</strong></p>
+</section>
+
+<section class="grid-2">
+  <article class="panel">
+    <h3>Doctor Load Board</h3>
+    <table class="table">
+      <thead><tr><th>Doctor</th><th>Waiting</th></tr></thead>
+      <tbody>
+      {% for row in doctor_load %}
+        <tr>
+          <td>Dr. {{ row.user.get_full_name|default:row.user.username }}</td>
+          <td>{{ row.waiting_count }}</td>
+        </tr>
+      {% empty %}
+        <tr><td colspan="2">No doctor load data.</td></tr>
+      {% endfor %}
+      </tbody>
+    </table>
+  </article>
+
+  <article class="panel">
+    <h3>Desk Actions</h3>
+    <p class="lead">Currently called: <strong>{{ called_tokens }}</strong></p>
+    <div class="cta-row">
+      <a class="btn btn-primary" href="/reception/">Open Reception Queue</a>
+      <a class="btn btn-outline" href="/billing/desk/">Open Billing Desk</a>
+      <a class="btn btn-outline" href="/reception/tv/">TV Queue Launcher</a>
+    </div>
+  </article>
+</section>
+
+<section class="panel">
+  <h3>Recent Token Activity</h3>
+  <table class="table">
+    <thead><tr><th>Token</th><th>Patient</th><th>Doctor</th><th>Status</th></tr></thead>
+    <tbody>
+      {% for token in recent_tokens %}
+        <tr>
+          <td>{{ token.token_display }}</td>
+          <td>{{ token.patient.get_full_name|default:token.patient.username }}</td>
+          <td>Dr. {{ token.doctor.user.get_full_name|default:token.doctor.user.username }}</td>
+          <td>{{ token.get_status_display }}</td>
+        </tr>
+      {% empty %}
+        <tr><td colspan="4">No token activity yet.</td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</section>
+{% endblock %}

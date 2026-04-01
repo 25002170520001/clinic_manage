@@ -1,0 +1,96 @@
+{% extends 'base.html' %}
+{% block title %}Patient Dashboard{% endblock %}
+{% block page_heading %}Patient Area{% endblock %}
+{% block content %}
+<section class="hero hero-small">
+  <div>
+    <p class="eyebrow">Patient Dashboard</p>
+    <h1>Hello, {{ user.get_full_name|default:user.username }}</h1>
+    <p class="lead">Your appointment journey, token status, and queue progress.</p>
+  </div>
+</section>
+
+<section class="stats">
+  <article><h3>{{ my_total_appointments }}</h3><p>Total Appointments</p></article>
+  <article><h3>{{ my_today_appointments }}</h3><p>Today</p></article>
+  <article><h3>{{ my_upcoming }}</h3><p>Upcoming</p></article>
+</section>
+
+<section class="panel">
+  <h3>Profile Completion</h3>
+  <p class="lead"><strong>{{ profile_completion_percent }}%</strong> complete</p>
+  <div class="progress" role="progressbar" aria-valuenow="{{ profile_completion_percent }}" aria-valuemin="0" aria-valuemax="100">
+    <div class="progress-bar" style="width: {{ profile_completion_percent }}%;"></div>
+  </div>
+  <small class="muted">Complete profile helps doctors and reception handle your visit faster.</small>
+</section>
+
+<section class="grid-2">
+  <article class="panel">
+    <h3>Current Token</h3>
+    {% if active_token %}
+      <p class="lead">Token <strong>{{ active_token.token_display }}</strong> - {{ active_token.get_status_display }}</p>
+      <p class="muted">Patients ahead: {{ active_token.get_patients_ahead }} | Estimated wait: {{ active_token.get_estimated_wait_time }} mins</p>
+    {% else %}
+      <p class="lead">No active token right now.</p>
+    {% endif %}
+    <div class="cta-row">
+      <a class="btn btn-primary" href="/patient/appointments/book/">Book Appointment</a>
+      <a class="btn btn-outline" href="/patient/appointments/my/">My Appointments</a>
+      <a class="btn btn-outline" href="/patient/prescriptions/">My Prescriptions</a>
+    </div>
+  </article>
+
+  <article class="panel">
+    <h3>Patient Guidance</h3>
+    <ul class="plain-list">
+      <li>Arrive early and check in at reception for accurate queue updates.</li>
+      <li>Queue order follows priority and token number.</li>
+      <li>Use your dashboard to track token status live.</li>
+    </ul>
+  </article>
+</section>
+
+<section class="panel">
+  <h3>Recent Appointments</h3>
+  <table class="table">
+    <thead><tr><th>#</th><th>Doctor</th><th>Status</th><th>Booked</th></tr></thead>
+    <tbody>
+      {% for appointment in recent_appointments %}
+        <tr>
+          <td>{{ appointment.id }}</td>
+          <td>Dr. {{ appointment.doctor.user.get_full_name|default:appointment.doctor.user.username }}</td>
+          <td>{{ appointment.get_status_display }}</td>
+          <td>{{ appointment.created_at|date:"M d, H:i" }}</td>
+        </tr>
+      {% empty %}
+        <tr><td colspan="4">No appointments yet.</td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</section>
+
+<section class="panel">
+  <details class="mobile-collapse" open>
+    <summary><strong>Quick Profile Edit</strong></summary>
+    <form method="post" action="/dashboard/patient/profile/update/" class="form-grid" style="margin-top:10px;">
+      {% csrf_token %}
+      {% for field in quick_user_form %}
+        <div>
+          <label>{{ field.label }}</label>
+          {{ field }}
+          {% if field.errors %}<small class="error">{{ field.errors|striptags }}</small>{% endif %}
+        </div>
+      {% endfor %}
+      {% for field in quick_profile_form %}
+        <div>
+          <label>{{ field.label }}</label>
+          {{ field }}
+          {% if field.errors %}<small class="error">{{ field.errors|striptags }}</small>{% endif %}
+        </div>
+      {% endfor %}
+      <button class="btn btn-primary" type="submit">Save Profile</button>
+    </form>
+  </details>
+</section>
+{% endblock %}
