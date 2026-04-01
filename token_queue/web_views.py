@@ -388,7 +388,8 @@ class QueueDisplayView(TemplateView):
         return context
 
 
-class TVLauncherView(TemplateView):
+@method_decorator(role_required("receptionist", "admin"), name="dispatch")
+class TVLauncherView(LoginRequiredMixin, TemplateView):
     template_name = "queue/tv_launcher.html"
 
     def get_context_data(self, **kwargs):
