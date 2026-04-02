@@ -77,7 +77,7 @@
               <span>{{ user.get_full_name|default:user.username }}</span>
             </a>
             <div class="mobile-head-actions">
-              <a href="/settings/theme/" class="mobile-icon-btn" aria-label="Theme"><i class="bi bi-circle-half"></i></a>
+              <button type="button" class="mobile-icon-btn" aria-label="Toggle black/white theme" onclick="toggleBlackWhiteTheme()"><i class="bi bi-circle-half"></i></button>
               <form method="post" action="/logout/" class="inline-form">
                 {% csrf_token %}
                 <button type="submit" class="mobile-icon-btn" aria-label="Logout"><i class="bi bi-box-arrow-right"></i></button>
@@ -114,7 +114,7 @@
               <span class="user-chip-avatar">{{ user.first_name|default:user.username|slice:":1"|upper }}</span>
               <span class="user-chip-name">{{ user.get_full_name|default:user.username }}</span>
             </a>
-            <a href="/settings/theme/" class="btn btn-outline">Theme</a>
+            <button type="button" class="btn btn-outline" onclick="toggleBlackWhiteTheme()">Black/White</button>
             {% if user.role == 'admin' or user.is_superuser %}
               <a href="/admin/staff/" class="btn btn-outline">Staff</a>
               <a href="/billing/desk/" class="btn btn-outline">Billing</a>
@@ -228,6 +228,21 @@
       window.setThemePreference = function (pref) {
         localStorage.setItem("fhc_theme", pref);
         applyTheme(pref);
+      };
+
+      window.toggleBlackWhiteTheme = function () {
+        const currentPref = localStorage.getItem("fhc_theme") || "system";
+        const currentEffective =
+          document.documentElement.getAttribute("data-theme") ||
+          (window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light");
+
+        // If preference is system, decide based on effective theme and force opposite explicit mode.
+        if (currentPref === "system") {
+          window.setThemePreference(currentEffective === "dark" ? "light" : "dark");
+          return;
+        }
+
+        window.setThemePreference(currentPref === "dark" ? "light" : "dark");
       };
 
       const mq = window.matchMedia ? window.matchMedia("(prefers-color-scheme: dark)") : null;
