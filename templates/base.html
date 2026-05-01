@@ -14,8 +14,10 @@
       const pref = localStorage.getItem("fhc_theme") || "system";
       const prefersDark = window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)").matches;
       const effective = pref === "system" ? (prefersDark ? "dark" : "light") : pref;
+      const sidebarMode = localStorage.getItem("fhc_sidebar_mode") || "expanded";
       document.documentElement.setAttribute("data-theme-pref", pref);
       document.documentElement.setAttribute("data-theme", effective);
+      document.documentElement.setAttribute("data-sidebar", sidebarMode);
     })();
   </script>
   <link rel="icon" type="image/png" href="{% static 'images/clinic-logo.png' %}">
@@ -26,9 +28,9 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;600;700;800&family=Space+Grotesk:wght@500;700&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="/static/css/site.css?v=20260227b" />
+  <link rel="stylesheet" href="/static/css/site.css?v=20260410b" />
   {% if is_mobile %}
-    <link rel="stylesheet" href="/static/css/mobile-app.css?v=20260227b" />
+    <link rel="stylesheet" href="/static/css/mobile-app.css?v=20260410b" />
   {% endif %}
 </head>
 <body class="{% if is_mobile %}is-mobile{% endif %}">
@@ -38,33 +40,55 @@
   <div class="layout {% if user.is_authenticated and request.path != '/' %}layout-auth role-{{ user.role }}{% else %}layout-public{% endif %} {% if is_mobile %}device-mobile{% else %}device-desktop{% endif %}">
     {% if user.is_authenticated and request.path != '/' %}
       <aside class="sidebar desktop-shell">
-        <a class="brand brand-with-logo" href="/dashboard/">
-          <img src="{% static 'images/clinic-logo.png' %}" onerror="this.onerror=null;this.src='{% static 'images/clinic-logo.svg' %}'" alt="Family Health Care Logo" class="brand-logo" style="width:78px;height:78px;object-fit:contain;" />
-          <span>Family Health Care</span>
-        </a>
-        <p class="role-badge">{% if user.is_superuser %}Super Admin{% else %}{{ user.role|title }}{% endif %}</p>
+        <div class="sidebar-top">
+          <button type="button" class="sidebar-toggle" onclick="toggleSidebarMode()" aria-label="Toggle sidebar width" aria-pressed="false" title="Collapse sidebar">
+            <i class="bi bi-layout-sidebar-inset"></i>
+            <span class="sidebar-toggle-text">Collapse</span>
+          </button>
+          <a class="brand brand-with-logo sidebar-brand" href="/dashboard/">
+            <img src="{% static 'images/clinic-logo.png' %}" onerror="this.onerror=null;this.src='{% static 'images/clinic-logo.svg' %}'" alt="Family Health Care Logo" class="brand-logo" style="width:52px;height:52px;object-fit:contain;" />
+            <span class="brand-stack">
+              <strong>Family Health</strong>
+              <small>Care Center</small>
+            </span>
+          </a>
+          <p class="role-badge">{% if user.is_superuser %}Super Admin{% else %}{{ user.role|title }}{% endif %}</p>
+        </div>
         <nav class="side-nav">
-          <a href="/dashboard/" class="{% if '/dashboard/' in request.path %}active{% endif %}"><i class="bi bi-speedometer2"></i> Dashboard</a>
-          <a href="/profile/" class="{% if '/profile/' in request.path %}active{% endif %}"><i class="bi bi-person-circle"></i> My Profile</a>
-          <a href="/settings/theme/" class="{% if '/settings/theme/' in request.path %}active{% endif %}"><i class="bi bi-circle-half"></i> Theme Settings</a>
+          <p class="side-section-label">Main</p>
+          <a href="/dashboard/" class="{% if '/dashboard/' in request.path %}active{% endif %}"><span class="nav-icon"><i class="bi bi-speedometer2"></i></span><span class="nav-text">Dashboard</span></a>
+          <a href="/profile/" class="{% if '/profile/' in request.path %}active{% endif %}"><span class="nav-icon"><i class="bi bi-person-circle"></i></span><span class="nav-text">My Profile</span></a>
+
+          <p class="side-section-label">Apps</p>
           {% if user.role == 'patient' %}
-            <a href="/patient/appointments/book/" class="{% if '/patient/appointments/book/' in request.path %}active{% endif %}"><i class="bi bi-calendar-plus"></i> Book Appointment</a>
-            <a href="/patient/appointments/my/" class="{% if '/patient/appointments/my/' in request.path %}active{% endif %}"><i class="bi bi-calendar-check"></i> My Appointments</a>
-            <a href="/patient/prescriptions/" class="{% if '/patient/prescriptions/' in request.path %}active{% endif %}"><i class="bi bi-file-earmark-medical"></i> My Prescriptions</a>
+            <a href="/patient/appointments/book/" class="{% if '/patient/appointments/book/' in request.path %}active{% endif %}"><span class="nav-icon"><i class="bi bi-calendar-plus"></i></span><span class="nav-text">Book Appointment</span></a>
+            <a href="/patient/appointments/my/" class="{% if '/patient/appointments/my/' in request.path %}active{% endif %}"><span class="nav-icon"><i class="bi bi-calendar-check"></i></span><span class="nav-text">My Appointments</span></a>
+            <a href="/patient/prescriptions/" class="{% if '/patient/prescriptions/' in request.path %}active{% endif %}"><span class="nav-icon"><i class="bi bi-file-earmark-medical"></i></span><span class="nav-text">My Prescriptions</span></a>
           {% endif %}
           {% if user.role == 'doctor' %}
-            <a href="/doctor/" class="{% if '/doctor/' in request.path %}active{% endif %}"><i class="bi bi-person-workspace"></i> Doctor Queue</a>
+            <a href="/doctor/" class="{% if '/doctor/' in request.path %}active{% endif %}"><span class="nav-icon"><i class="bi bi-person-workspace"></i></span><span class="nav-text">Doctor Queue</span></a>
           {% endif %}
           {% if user.role == 'receptionist' %}
-            <a href="/reception/" class="{% if '/reception/' in request.path %}active{% endif %}"><i class="bi bi-list-ol"></i> Reception Queue</a>
-            <a href="/billing/desk/" class="{% if '/billing/desk/' in request.path %}active{% endif %}"><i class="bi bi-cash-coin"></i> Billing Desk</a>
-            <a href="/reception/tv/" class="{% if '/reception/tv/' in request.path %}active{% endif %}"><i class="bi bi-tv"></i> TV Launcher</a>
+            <a href="/reception/" class="{% if '/reception/' in request.path %}active{% endif %}"><span class="nav-icon"><i class="bi bi-list-ol"></i></span><span class="nav-text">Reception Queue</span></a>
+            <a href="/billing/desk/" class="{% if '/billing/desk/' in request.path %}active{% endif %}"><span class="nav-icon"><i class="bi bi-cash-coin"></i></span><span class="nav-text">Billing Desk</span></a>
+            <a href="/reception/tv/" class="{% if '/reception/tv/' in request.path %}active{% endif %}"><span class="nav-icon"><i class="bi bi-tv"></i></span><span class="nav-text">TV Launcher</span></a>
           {% endif %}
           {% if user.role == 'admin' or user.is_superuser %}
-            <a href="/admin/staff/" class="{% if '/admin/staff/' in request.path %}active{% endif %}"><i class="bi bi-people"></i> Manage Staff</a>
-            <a href="/billing/desk/" class="{% if '/billing/desk/' in request.path %}active{% endif %}"><i class="bi bi-cash-coin"></i> Billing Desk</a>
+            <a href="/admin/staff/" class="{% if '/admin/staff/' in request.path %}active{% endif %}"><span class="nav-icon"><i class="bi bi-people"></i></span><span class="nav-text">Manage Staff</span></a>
+            <a href="/billing/desk/" class="{% if '/billing/desk/' in request.path %}active{% endif %}"><span class="nav-icon"><i class="bi bi-cash-coin"></i></span><span class="nav-text">Billing Desk</span></a>
           {% endif %}
+
+          <p class="side-section-label">Preferences</p>
+          <a href="/settings/theme/" class="{% if '/settings/theme/' in request.path %}active{% endif %}"><span class="nav-icon"><i class="bi bi-circle-half"></i></span><span class="nav-text">Theme Settings</span></a>
         </nav>
+        <div class="sidebar-bottom">
+          <a href="/profile/" class="sidebar-foot-link"><i class="bi bi-person"></i><span>Profile</span></a>
+          <a href="/settings/theme/" class="sidebar-foot-link"><i class="bi bi-gear"></i><span>Settings</span></a>
+          <form method="post" action="/logout/" class="inline-form sidebar-logout-form">
+            {% csrf_token %}
+            <button type="submit" class="sidebar-foot-link sidebar-foot-btn"><i class="bi bi-box-arrow-right"></i><span>Log Out</span></button>
+          </form>
+        </div>
       </aside>
     {% endif %}
 
@@ -244,6 +268,32 @@
 
         window.setThemePreference(currentPref === "dark" ? "light" : "dark");
       };
+
+      function syncSidebarToggle() {
+        const btn = document.querySelector(".sidebar-toggle");
+        if (!btn) return;
+        const collapsed = document.documentElement.getAttribute("data-sidebar") === "collapsed";
+        btn.setAttribute("aria-pressed", collapsed ? "true" : "false");
+        btn.setAttribute("title", collapsed ? "Expand sidebar" : "Collapse sidebar");
+        const icon = btn.querySelector("i");
+        if (icon) {
+          icon.className = collapsed ? "bi bi-layout-sidebar" : "bi bi-layout-sidebar-inset";
+        }
+        const text = btn.querySelector(".sidebar-toggle-text");
+        if (text) {
+          text.textContent = collapsed ? "Expand" : "Collapse";
+        }
+      }
+
+      window.toggleSidebarMode = function () {
+        const current = document.documentElement.getAttribute("data-sidebar") || "expanded";
+        const next = current === "collapsed" ? "expanded" : "collapsed";
+        document.documentElement.setAttribute("data-sidebar", next);
+        localStorage.setItem("fhc_sidebar_mode", next);
+        syncSidebarToggle();
+      };
+
+      syncSidebarToggle();
 
       const mq = window.matchMedia ? window.matchMedia("(prefers-color-scheme: dark)") : null;
       if (mq) {
