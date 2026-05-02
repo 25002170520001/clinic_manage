@@ -9,8 +9,6 @@ services:
       python manage.py collectstatic --noinput
     startCommand: bash run.sh
     envVars:
-      - key: PYTHON_VERSION
-        value: 3.10.0
       - key: DEBUG
         value: "0"
       - key: ALLOWED_HOSTS
@@ -23,12 +21,6 @@ services:
         fromDatabase:
           name: clinic-manage-db
           property: connectionString
-      - key: PUBLIC_BASE_URL
-        value: https://clinic-manage.onrender.com
-      - key: EMAIL_BACKEND
-        value: django.core.mail.backends.console.EmailBackend
-      - key: EMAIL_USE_TLS
-        value: "1"
 
 databases:
   - name: clinic-manage-db
