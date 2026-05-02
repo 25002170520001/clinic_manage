@@ -3,31 +3,23 @@ set -e
 
 echo "Starting Clinic Management Application..."
 
-# Try migrations multiple times with backoff
-MAX_RETRIES=5
-RETRY_COUNT=0
-
-while [ $RETRY_COUNT -lt $MAX_RETRIES ]; do
-    echo "Attempting migrations... (attempt $((RETRY_COUNT + 1))/$MAX_RETRIES)"
-    if python manage.py migrate --noinput; then
-        echo "✓ Migrations completed successfully"
+# Try running migrations with basic retry
+for i in {1..3}; do
+    echo "Attempt $i: Running migrations..."
+    if python manage.py migrate --noinput 2>&1; then
+        echo "✓ Migrations completed"
         break
     fi
-    RETRY_COUNT=$((RETRY_COUNT + 1))
-    if [ $RETRY_COUNT -lt $MAX_RETRIES ]; then
-        WAIT_TIME=$((2 ** RETRY_COUNT))
-        echo "⚠️  Migrations failed, retrying in ${WAIT_TIME} seconds..."
-        sleep $WAIT_TIME
+    if [ $i -lt 3 ]; then
+        echo "Migration failed, retrying in 5 seconds..."
+        sleep 5
     fi
 done
 
-if [ $RETRY_COUNT -eq $MAX_RETRIES ]; then
-    echo "⚠️  Migrations failed after $MAX_RETRIES attempts, starting server anyway..."
-fi
+# Collect static files
+echo "Collecting static files..."
+python manage.py collectstatic --noinput --clear >/dev/null 2>&1
 
-# Collect static files if not already done
-python manage.py collectstatic --noinput --clear 2>&1 | grep -v "^Copying\|^Creating"
-
-# Start the server
-echo "Starting Gunicorn server..."
-exec gunicorn clinic_management.wsgi:application --bind 0.0.0.0:10000 --timeout 120
+# Start Gunicorn
+echo "Starting Gunicorn..."
+exec gunicorn clinic_management.wsgi:application --bind 0.0.0.0:10000
