@@ -179,10 +179,12 @@ class DoctorTokenActionView(LoginRequiredMixin, View):
             if active_exists:
                 messages.info(request, "Finish current patient before calling another.")
                 return redirect("web-doctor-queue")
-            token.status = "called"
+            # Immediately advance to in_consultation
+            token.status = "in_consultation"
             token.called_time = timezone.now()
-            token.save(update_fields=["status", "called_time", "updated_at"])
-            messages.success(request, f"Called {token.token_display}")
+            token.consultation_start_time = timezone.now()
+            token.save(update_fields=["status", "called_time", "consultation_start_time", "updated_at"])
+            messages.success(request, f"Called and started consultation for {token.token_display}")
         elif action == "start":
             if token.status not in ["called"]:
                 messages.info(request, f"{token.token_display} must be called first.")

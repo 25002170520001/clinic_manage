@@ -169,15 +169,29 @@ if not DEBUG:
 # Email (SMTP) - Configure these environment variables in production/local as needed:
 # EMAIL_HOST, EMAIL_PORT, EMAIL_HOST_USER, EMAIL_HOST_PASSWORD,
 # EMAIL_USE_TLS, EMAIL_USE_SSL, DEFAULT_FROM_EMAIL
+
+# --- EMAIL CONFIGURATION (updated for user) ---
 EMAIL_BACKEND = os.getenv("EMAIL_BACKEND", "django.core.mail.backends.smtp.EmailBackend")
 EMAIL_HOST = os.getenv("EMAIL_HOST", "smtp.gmail.com")
 EMAIL_PORT = int(os.getenv("EMAIL_PORT", "587"))
-EMAIL_HOST_USER = os.getenv("EMAIL_HOST_USER", "")
-EMAIL_HOST_PASSWORD = os.getenv("EMAIL_HOST_PASSWORD", "")
+EMAIL_HOST_USER = os.getenv("EMAIL_HOST_USER", "aryanacharya1980@gmail.com")
+EMAIL_HOST_PASSWORD = os.getenv("EMAIL_HOST_PASSWORD", "mlvu tkkd zwux lavn")
 EMAIL_USE_TLS = _env_bool("EMAIL_USE_TLS", default=True)
 EMAIL_USE_SSL = _env_bool("EMAIL_USE_SSL", default=False)
 EMAIL_TIMEOUT = int(os.getenv("EMAIL_TIMEOUT", "20"))
-DEFAULT_FROM_EMAIL = os.getenv("DEFAULT_FROM_EMAIL", "noreply@familyhealthcare.local")
+DEFAULT_FROM_EMAIL = os.getenv("DEFAULT_FROM_EMAIL", EMAIL_HOST_USER)
+
+# Validate email configuration and provide warnings
+if EMAIL_BACKEND.endswith("smtp.EmailBackend") and (not EMAIL_HOST_USER or not EMAIL_HOST_PASSWORD):
+    import logging
+    logger = logging.getLogger(__name__)
+    logger.warning(
+        "Email SMTP is not properly configured. EMAIL_HOST_USER or EMAIL_HOST_PASSWORD is empty. "
+        "Emails will not be sent until properly configured."
+    )
+    # Fall back to console backend for local development only.
+    if DEBUG and not EMAIL_HOST_USER and not EMAIL_HOST_PASSWORD:
+        EMAIL_BACKEND = "django.core.mail.backends.console.EmailBackend"
 
 # Validate email configuration and provide warnings
 if EMAIL_BACKEND.endswith("smtp.EmailBackend") and (not EMAIL_HOST_USER or not EMAIL_HOST_PASSWORD):

@@ -72,6 +72,21 @@
 </section>
 
 <section class="panel">
+  <h3 style="margin-top:0;">Available Doctors</h3>
+  {% if available_doctors and available_doctors.count %}
+    <ul class="plain-list">
+      {% for doctor in available_doctors %}
+        <li>
+          <a href="/display/{{ doctor.id }}/" class="link-btn">Display #{{ doctor.id }} — {{ doctor.get_full_name }}</a>
+        </li>
+      {% endfor %}
+    </ul>
+  {% else %}
+    <p class="muted">No doctors are currently marked available. Check back later.</p>
+  {% endif %}
+</section>
+
+<section class="panel">
   <h3 style="margin-top:0;">How Queue Priority Works</h3>
   <div class="process-steps">
     <div class="process-step">

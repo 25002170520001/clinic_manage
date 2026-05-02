@@ -9,13 +9,13 @@
 
 <section class="panel">
   <table class="table">
-    <thead><tr><th>ID</th><th>Doctor</th><th>Appointment</th><th>Date</th><th>Actions</th></tr></thead>
+    <thead><tr><th>No.</th><th>Doctor</th><th>Appointment</th><th>Date</th><th>Actions</th></tr></thead>
     <tbody>
       {% for p in prescriptions %}
       <tr>
-        <td>#{{ p.id }}</td>
+        <td>{{ forloop.counter }}</td>
         <td>Dr. {{ p.doctor.user.get_full_name|default:p.doctor.user.username }}</td>
-        <td>#{{ p.appointment_id }}</td>
+        <td>{{ p.appointment_id }}</td>
         <td>{{ p.created_at|date:"M d, Y H:i" }}</td>
         <td class="action-row">
           <a class="btn btn-outline" href="/prescription/{{ p.id }}/pdf/" target="_blank">Open PDF</a>

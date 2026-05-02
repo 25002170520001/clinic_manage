@@ -9,6 +9,7 @@ from django.shortcuts import get_object_or_404, redirect, render
 from django.utils import timezone
 from django.views.decorators.http import require_http_methods
 import csv
+from django.views.decorators.cache import never_cache
 
 from accounts.models import PatientProfile
 from appointments.models import Appointment
@@ -46,10 +47,16 @@ def home_page(request):
     specialization_counts = (
         Doctor.objects.values("specialization").annotate(total=Count("id")).order_by("-total", "specialization")[:8]
     )
+    available_doctors = (
+        Doctor.objects.select_related("user")
+        .filter(is_available=True)
+        .order_by("user__first_name", "user__username")
+    )
     context = {
         "top_doctor": top_doctor,
         "doctor_count": doctor_count,
         "available_doctor_count": available_count,
+        "available_doctors": available_doctors,
         "specialization_counts": specialization_counts,
     }
     template = "mobile/home.html" if is_mobile_request(request) else "home.html"
@@ -89,6 +96,7 @@ def patient_signup_view(request):
 
 
 @login_required
+@never_cache
 def dashboard_view(request):
     if request.user.is_superuser or request.user.role == "admin":
         return redirect("dashboard-admin")
@@ -100,6 +108,7 @@ def dashboard_view(request):
 
 
 @login_required
+@never_cache
 def admin_dashboard_view(request):
     if not _is_admin_user(request.user):
         messages.error(request, "You do not have access to the admin dashboard.")
@@ -161,6 +170,7 @@ def admin_dashboard_view(request):
 
 
 @login_required
+@never_cache
 def doctor_dashboard_view(request):
     if request.user.role != "doctor":
         messages.error(request, "You do not have access to the doctor dashboard.")
@@ -234,6 +244,7 @@ def doctor_dashboard_view(request):
 
 
 @login_required
+@never_cache
 def receptionist_dashboard_view(request):
     if request.user.role != "receptionist":
         messages.error(request, "You do not have access to the receptionist dashboard.")
@@ -272,6 +283,7 @@ def receptionist_dashboard_view(request):
 
 
 @login_required
+@never_cache
 def patient_dashboard_view(request):
     active_token = QueueToken.objects.filter(
         patient=request.user, status__in=["waiting", "called", "in_consultation"]
@@ -306,12 +318,14 @@ def patient_dashboard_view(request):
 
 
 @login_required
+@never_cache
 def theme_settings_view(request):
     return render(request, "settings/theme.html")
 
 
 @login_required
 @require_http_methods(["GET", "POST"])
+@never_cache
 def profile_view(request):
     is_patient = request.user.role == "patient"
     patient_profile = None
@@ -344,6 +358,7 @@ def profile_view(request):
 
 @login_required
 @require_http_methods(["POST"])
+@never_cache
 def patient_profile_quick_update_view(request):
     if request.user.role != "patient":
         messages.error(request, "Only patients can update profile from this page.")
@@ -363,6 +378,7 @@ def patient_profile_quick_update_view(request):
 
 @login_required
 @require_http_methods(["POST"])
+@never_cache
 def web_logout_view(request):
     logout(request)
     messages.info(request, "Logged out.")

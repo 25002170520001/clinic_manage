@@ -16,14 +16,6 @@
   {% if current %}
     <p class="lead">Current: <strong>{{ current.token_display }}</strong> ({{ current.get_status_display }})</p>
     <div class="action-row">
-      {% if current.status == 'called' %}
-      <form method="post" action="/doctor/token/{{ current.id }}/start/">{% csrf_token %}<button class="btn btn-outline">Continue Consult</button></form>
-      <a class="btn btn-outline" href="/doctor/token/{{ current.id }}/prescription/">
-        {% if current_has_prescription %}Update Prescription{% else %}Add Prescription{% endif %}
-      </a>
-      <form method="post" action="/doctor/token/{{ current.id }}/complete/">{% csrf_token %}<button class="btn btn-primary">End Consultation</button></form>
-      {% endif %}
-      {% if current.status == 'in_consultation' %}
       <a class="btn btn-outline" href="/doctor/token/{{ current.id }}/prescription/">
         {% if current_has_prescription %}Update Prescription{% else %}Add Prescription{% endif %}
       </a>
@@ -32,12 +24,11 @@
       <a class="btn btn-outline" href="/prescription/{{ current_prescription.id }}/print/" target="_blank">Print</a>
       {% endif %}
       <form method="post" action="/doctor/token/{{ current.id }}/complete/">{% csrf_token %}<button class="btn btn-primary">End Consultation</button></form>
-      {% endif %}
     </div>
   {% else %}
     <p class="lead">No current patient.</p>
   {% endif %}
-  <p class="muted">Call Next -> Continue Consult -> Add Prescription -> End Consultation -> Call Next.</p>
+  <p class="muted">Call Next -> Add Prescription -> End Consultation -> Call Next.</p>
   <form method="post" action="/doctor/call-next/">
     {% csrf_token %}
     <button class="btn btn-primary">Call Next Patient</button>
@@ -117,7 +108,6 @@
         <td>{{ token.get_status_display }}</td>
         <td class="action-row">
           <form method="post" action="/doctor/token/{{ token.id }}/call/">{% csrf_token %}<button class="btn btn-outline">Call</button></form>
-          <form method="post" action="/doctor/token/{{ token.id }}/start/">{% csrf_token %}<button class="btn btn-outline">Continue Consult</button></form>
         </td>
       </tr>
       {% empty %}

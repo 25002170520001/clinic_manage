@@ -12,12 +12,12 @@
 <section class="panel">
   <table class="table">
     <thead>
-      <tr><th>ID</th><th>Doctor</th><th>Status</th><th>Booked</th><th>Action</th></tr>
+      <tr><th>No.</th><th>Doctor</th><th>Status</th><th>Booked</th><th>Action</th></tr>
     </thead>
     <tbody>
       {% for appointment in appointments %}
         <tr>
-          <td>#{{ appointment.id }}</td>
+          <td>{{ forloop.counter }}</td>
           <td>Dr. {{ appointment.doctor.user.get_full_name|default:appointment.doctor.user.username }}</td>
           <td>{{ appointment.get_status_display }}</td>
           <td>{{ appointment.booking_time }}</td>

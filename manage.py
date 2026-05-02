@@ -7,6 +7,12 @@ import sys
 def main():
     """Run administrative tasks."""
     os.environ.setdefault("DJANGO_SETTINGS_MODULE", "clinic_management.settings")
+    # Auto-load .env for local development
+    try:
+        import dotenv
+        dotenv.load_dotenv(os.path.join(os.path.dirname(__file__), ".env"))
+    except ImportError:
+        pass
     try:
         from django.core.management import execute_from_command_line
     except ImportError as exc:

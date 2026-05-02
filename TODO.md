@@ -10,3 +10,15 @@
 
 
 hnfl oazy cplo qqgz
+
+
+admin 
+Clinic@12345
+
+https://clinic-manage.onrender.com/display/1/
+
+default patient password: Patient@12345
+
+test -u
+aaryanacharya2556@gmail.com-E
+test123-P
