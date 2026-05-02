@@ -1,21 +1,33 @@
 #!/bin/bash
 set -e
 
-# Wait for database to be ready with timeout
-echo "Waiting for database to be ready..."
-for i in {1..30}; do
-    if python manage.py dbshell -c "SELECT 1" >/dev/null 2>&1; then
-        echo "Database is ready!"
+echo "Starting Clinic Management Application..."
+
+# Try migrations multiple times with backoff
+MAX_RETRIES=5
+RETRY_COUNT=0
+
+while [ $RETRY_COUNT -lt $MAX_RETRIES ]; do
+    echo "Attempting migrations... (attempt $((RETRY_COUNT + 1))/$MAX_RETRIES)"
+    if python manage.py migrate --noinput; then
+        echo "✓ Migrations completed successfully"
         break
     fi
-    echo "Database not ready, waiting... ($i/30)"
-    sleep 2
+    RETRY_COUNT=$((RETRY_COUNT + 1))
+    if [ $RETRY_COUNT -lt $MAX_RETRIES ]; then
+        WAIT_TIME=$((2 ** RETRY_COUNT))
+        echo "⚠️  Migrations failed, retrying in ${WAIT_TIME} seconds..."
+        sleep $WAIT_TIME
+    fi
 done
 
-# Run migrations with error handling
-echo "Running database migrations..."
-python manage.py migrate --noinput || echo "⚠️  Warning: Migrations failed, continuing startup..."
+if [ $RETRY_COUNT -eq $MAX_RETRIES ]; then
+    echo "⚠️  Migrations failed after $MAX_RETRIES attempts, starting server anyway..."
+fi
+
+# Collect static files if not already done
+python manage.py collectstatic --noinput --clear 2>&1 | grep -v "^Copying\|^Creating"
 
 # Start the server
 echo "Starting Gunicorn server..."
-exec gunicorn clinic_management.wsgi:application
+exec gunicorn clinic_management.wsgi:application --bind 0.0.0.0:10000 --timeout 120
