@@ -7,7 +7,7 @@ services:
     buildCommand: |
       pip install -r requirements.txt
       python manage.py collectstatic --noinput
-    startCommand: python manage.py migrate && gunicorn clinic_management.wsgi:application
+    startCommand: bash run.sh
     envVars:
       - key: PYTHON_VERSION
         value: 3.10.0
