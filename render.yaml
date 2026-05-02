@@ -9,6 +9,8 @@ services:
       python manage.py collectstatic --noinput
     startCommand: bash run.sh
     envVars:
+      - key: PYTHON_VERSION
+        value: 3.10.0
       - key: DEBUG
         value: "0"
       - key: ALLOWED_HOSTS
