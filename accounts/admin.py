@@ -15,6 +15,7 @@ class UserAdmin(BaseUserAdmin):
         "phone",
         "is_active",
         "is_staff",
+        "is_superuser",
         "created_at",
     )
     list_filter = ("role", "is_active", "is_staff", "is_superuser", "created_at")
@@ -32,6 +33,8 @@ class UserAdmin(BaseUserAdmin):
                     "date_of_birth",
                     "created_at",
                     "updated_at",
+                    "is_staff",
+                    "is_superuser",
                 )
             },
         ),
