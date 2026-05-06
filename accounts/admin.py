@@ -33,8 +33,6 @@ class UserAdmin(BaseUserAdmin):
                     "date_of_birth",
                     "created_at",
                     "updated_at",
-                    "is_staff",
-                    "is_superuser",
                 )
             },
         ),
