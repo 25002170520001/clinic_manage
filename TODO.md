@@ -22,3 +22,8 @@ default patient password: Patient@12345
 test -u
 aaryanacharya2556@gmail.com-E
 test123-P
+u-pat1
+aryanacharya1980@mail.com-mail
+live
+recp
+1234
