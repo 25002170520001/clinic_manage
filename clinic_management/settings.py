@@ -24,8 +24,15 @@ def _env_list(name, default=""):
     return [item.strip() for item in raw.split(",") if item.strip()]
 
 
+def _env_str(name, default=""):
+    raw = os.getenv(name, default)
+    if raw is None:
+        return default
+    return raw.strip().strip('"').strip("'")
+
+
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = os.getenv("SECRET_KEY", "django-insecure-dev-only-change-me")
+SECRET_KEY = _env_str("SECRET_KEY", "django-insecure-dev-only-change-me")
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = _env_bool("DEBUG", default=True)
@@ -175,20 +182,26 @@ if not DEBUG:
 
 # --- EMAIL CONFIGURATION (Anymail + provider-agnostic) ---
 # Use console backend by default in DEBUG, otherwise prefer Anymail Sendinblue backend
-EMAIL_BACKEND = os.getenv(
-    "EMAIL_BACKEND",
-    "django.core.mail.backends.console.EmailBackend" if DEBUG else "anymail.backends.sendinblue.EmailBackend",
+_DEFAULT_EMAIL_BACKEND = (
+    "django.core.mail.backends.console.EmailBackend"
+    if DEBUG
+    else (
+        "django.core.mail.backends.smtp.EmailBackend"
+        if os.getenv("EMAIL_HOST_USER") and os.getenv("EMAIL_HOST_PASSWORD")
+        else "django.core.mail.backends.console.EmailBackend"
+    )
 )
+EMAIL_BACKEND = _env_str("EMAIL_BACKEND", _DEFAULT_EMAIL_BACKEND)
 
 # Legacy SMTP fallbacks (still read from env if provided)
-EMAIL_HOST = os.getenv("EMAIL_HOST", "smtp.gmail.com")
+EMAIL_HOST = _env_str("EMAIL_HOST", "smtp.gmail.com")
 EMAIL_PORT = int(os.getenv("EMAIL_PORT", "587"))
-EMAIL_HOST_USER = os.getenv("EMAIL_HOST_USER", "")
-EMAIL_HOST_PASSWORD = os.getenv("EMAIL_HOST_PASSWORD", "")
+EMAIL_HOST_USER = _env_str("EMAIL_HOST_USER", "")
+EMAIL_HOST_PASSWORD = _env_str("EMAIL_HOST_PASSWORD", "")
 EMAIL_USE_TLS = _env_bool("EMAIL_USE_TLS", default=True)
 EMAIL_USE_SSL = _env_bool("EMAIL_USE_SSL", default=False)
 EMAIL_TIMEOUT = int(os.getenv("EMAIL_TIMEOUT", "20"))
-DEFAULT_FROM_EMAIL = os.getenv("DEFAULT_FROM_EMAIL", "noreply@clinicmanage.local")
+DEFAULT_FROM_EMAIL = _env_str("DEFAULT_FROM_EMAIL", "noreply@clinicmanage.local")
 
 # Validate email configuration and provide warnings
 # Configure Anymail (Sendinblue) from environment
@@ -198,7 +211,6 @@ ANYMAIL = {
     "SENDINBLUE_API_URL": os.getenv("SENDINBLUE_API_URL", "https://api.sendinblue.com/v3/"),
 }
 
-# Warn if using Anymail sendinblue backend but API key missing
 if EMAIL_BACKEND.endswith("sendinblue.EmailBackend") and not ANYMAIL.get("SENDINBLUE_API_KEY"):
     import logging
 
@@ -207,7 +219,6 @@ if EMAIL_BACKEND.endswith("sendinblue.EmailBackend") and not ANYMAIL.get("SENDIN
         "Anymail Sendinblue backend selected but SENDINBLUE_API_KEY is not set. Emails will fail until configured."
     )
 
-# Keep previous SMTP warning for completeness
 if EMAIL_BACKEND.endswith("smtp.EmailBackend") and (not EMAIL_HOST_USER or not EMAIL_HOST_PASSWORD):
     import logging
 
@@ -217,20 +228,6 @@ if EMAIL_BACKEND.endswith("smtp.EmailBackend") and (not EMAIL_HOST_USER or not E
         "Emails will not be sent until properly configured."
     )
 
-    # Fall back to console backend for local development only.
-    if DEBUG and not EMAIL_HOST_USER and not EMAIL_HOST_PASSWORD:
-        EMAIL_BACKEND = "django.core.mail.backends.console.EmailBackend"
-
-# Validate email configuration and provide warnings
-if EMAIL_BACKEND.endswith("smtp.EmailBackend") and (not EMAIL_HOST_USER or not EMAIL_HOST_PASSWORD):
-    import logging
-    logger = logging.getLogger(__name__)
-    logger.warning(
-        "Email SMTP is not properly configured. EMAIL_HOST_USER or EMAIL_HOST_PASSWORD is empty. "
-        "Emails will not be sent until properly configured."
-    )
-
-    # Fall back to console backend for local development only.
     if DEBUG and not EMAIL_HOST_USER and not EMAIL_HOST_PASSWORD:
         EMAIL_BACKEND = "django.core.mail.backends.console.EmailBackend"
 
