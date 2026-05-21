@@ -95,7 +95,7 @@ TEMPLATES = [
 WSGI_APPLICATION = "clinic_management.wsgi.application"
 
 # Database
-DATABASE_URL = os.getenv("DATABASE_URL", "")
+DATABASE_URL = _env_str("DATABASE_URL", "")
 if DATABASE_URL:
     DATABASES = {
         "default": dj_database_url.parse(
@@ -105,6 +105,10 @@ if DATABASE_URL:
         )
     }
 else:
+    if not DEBUG:
+        raise RuntimeError(
+            "DATABASE_URL is required in production. Connect a persistent PostgreSQL database instead of using SQLite."
+        )
     DATABASES = {
         "default": {
             "ENGINE": "django.db.backends.sqlite3",
