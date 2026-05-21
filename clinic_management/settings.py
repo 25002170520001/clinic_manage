@@ -241,3 +241,17 @@ SMS_API_URL = os.getenv("SMS_API_URL", "")
 SMS_API_KEY = os.getenv("SMS_API_KEY", "")
 WHATSAPP_API_URL = os.getenv("WHATSAPP_API_URL", "")
 WHATSAPP_API_KEY = os.getenv("WHATSAPP_API_KEY", "")
+
+# Test email
+def send_test_email():
+    from django.core.mail import send_mail
+
+    send_mail(
+        subject="Test email",
+        message="This is a test email.",
+        from_email=DEFAULT_FROM_EMAIL,
+        recipient_list=["test@example.com"],
+    )
+
+if __name__ == "__main__":
+    send_test_email()
