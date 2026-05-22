@@ -19,9 +19,9 @@ One-Time Setup
 3. Render will detect render.yaml and create:
    - Web service: clinic-manage
    - PostgreSQL database: clinic-manage-db
-4. In Render, open the web service and update:
-   - ALLOWED_HOSTS to your real render domain or custom domain
-   - CSRF_TRUSTED_ORIGINS to your HTTPS domain(s)
+4. In Render (or your chosen host), open the web service and update:
+   - `ALLOWED_HOSTS` to include the production hostname. For Railway this is typically the Railway-provided URL, e.g. `web-production-1add8.up.railway.app`.
+   - `CSRF_TRUSTED_ORIGINS` to include your HTTPS domain(s), for example `https://web-production-1add8.up.railway.app`.
    - Email variables if you need outgoing email
 5. Trigger first deploy.
 
@@ -34,8 +34,8 @@ How Auto Deploy Works
 Required Environment Variables (Production)
 - SECRET_KEY
 - DEBUG=0
-- ALLOWED_HOSTS
-- CSRF_TRUSTED_ORIGINS
+- ALLOWED_HOSTS, for example `web-production-1add8.up.railway.app`
+- CSRF_TRUSTED_ORIGINS, for example `https://web-production-1add8.up.railway.app`
 - DATABASE_URL (provided by Render)
 
 Optional Environment Variables
@@ -46,7 +46,7 @@ Optional Environment Variables
 - EMAIL_USE_TLS
 - EMAIL_USE_SSL
 - DEFAULT_FROM_EMAIL
-- PUBLIC_BASE_URL
+- PUBLIC_BASE_URL, for example `https://web-production-1add8.up.railway.app`
 
 Local Development
 - Keep DEBUG=1

@@ -20,8 +20,8 @@ In your Railway project, open the "Variables" tab and set the following (use you
 - `DATABASE_URL` = (Railway Postgres connection URL) OR add a PostgreSQL plugin in Railway and use the provided URL
 - `EMAIL_BACKEND` = `anymail.backends.sendinblue.EmailBackend`
 - `SENDINBLUE_API_KEY` = (your Sendinblue API key)
-- `DEFAULT_FROM_EMAIL` = `noreply@yourdomain.com`
-- `PUBLIC_BASE_URL` = `https://<your-railway-domain-or-custom-domain>`
+`DEFAULT_FROM_EMAIL` = `noreply@yourdomain.com` (or keep as your email)
+`PUBLIC_BASE_URL` = `https://web-production-1add8.up.railway.app`
 
 Optional (SMTP fallback):
 - `EMAIL_HOST`, `EMAIL_PORT`, `EMAIL_HOST_USER`, `EMAIL_HOST_PASSWORD`, `EMAIL_USE_TLS`
@@ -39,8 +39,7 @@ python manage.py collectstatic --noinput
 ```
 
 6) Configure domain and DNS (if you own a domain)
-- Add your custom domain via Railway settings.
-- Point your domain's A / CNAME records to Railway as instructed.
+If you have a custom domain, add it via Railway settings and follow the DNS instructions Railway provides. For this project the Railway-provided URL is `web-production-1add8.up.railway.app` and will work without custom DNS.
 
 7) Sendinblue setup (SMTP/API & deliverability)
 - Sign up at https://app.sendinblue.com
@@ -70,7 +69,7 @@ python manage.py send_test_email you@yourdomain.com
 
 10) Security and production tips
 - Always set `DEBUG=false` in production.
-- Add your domain to `ALLOWED_HOSTS` or set `ALLOWED_HOSTS` env var accordingly.
+Add your production hostname to `ALLOWED_HOSTS` (e.g. `web-production-1add8.up.railway.app`) or set the `ALLOWED_HOSTS` env var accordingly.
 - Use secure cookies and HSTS (settings already include these when `DEBUG` is false).
 
 If you want, I can also:
