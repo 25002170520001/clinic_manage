@@ -205,7 +205,10 @@ EMAIL_HOST_PASSWORD = _env_str("EMAIL_HOST_PASSWORD", "")
 EMAIL_USE_TLS = _env_bool("EMAIL_USE_TLS", default=True)
 EMAIL_USE_SSL = _env_bool("EMAIL_USE_SSL", default=False)
 EMAIL_TIMEOUT = int(os.getenv("EMAIL_TIMEOUT", "20"))
-DEFAULT_FROM_EMAIL = _env_str("DEFAULT_FROM_EMAIL", "noreply@clinicmanage.local")
+DEFAULT_FROM_EMAIL = _env_str(
+    "DEFAULT_FROM_EMAIL",
+    EMAIL_HOST_USER or "noreply@clinicmanage.local",
+)
 
 # Validate email configuration and provide warnings
 # Configure Anymail (Sendinblue) from environment
